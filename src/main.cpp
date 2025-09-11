@@ -3,13 +3,11 @@
 #include <ESPmDNS.h>
 #include <ESPAsyncWebServer.h>
 #include <DNSServer.h>
-#include <SPIFFS.h>
-#include <SD.h>
-#include <SPI.h>
+#include "Storage_Manager.h"
 
-// Storage configuration - set which storage to use
-#define USE_SPIFFS 0  // Set to 1 for SPIFFS, 0 for SD Card
-#define SD_CS_PIN 5   // SD Card Chip Select pin
+// Configuration - Choose storage type
+#define STORAGE_TYPE STORAGE_SD    // or STORAGE_SPIFFS
+#define SD_CS_PIN 5                // SD Card Chip Select pin (only used for SD)
 
 const char* AP_ssid = "Pharmassist v1";
 
@@ -20,93 +18,15 @@ const byte DNS_port = 53;
 IPAddress apIP(192, 168, 4, 1);
 IPAddress netMsk(255, 255, 255, 0);
 
-// Storage interface variables
-bool storageInitialized = false;
-String storageType = "";
-
-// Storage interface functions
-bool initStorage() {
-#if USE_SPIFFS
-  storageType = "SPIFFS";
-  Serial.println("Initializing SPIFFS...");
-  if(!SPIFFS.begin(true)) {
-    Serial.println("An Error has occurred while mounting SPIFFS");
-    return false;
-  }
-  Serial.println("SPIFFS mounted successfully");
-  return true;
-#else
-  storageType = "SD Card";
-  Serial.println("Initializing SD Card...");
-  if(!SD.begin(SD_CS_PIN)) {
-    Serial.println("Card Mount Failed");
-    return false;
-  }
-  
-  uint8_t cardType = SD.cardType();
-  if(cardType == CARD_NONE) {
-    Serial.println("No SD card attached");
-    return false;
-  }
-  
-  Serial.print("SD Card Type: ");
-  if(cardType == CARD_MMC) {
-    Serial.println("MMC");
-  } else if(cardType == CARD_SD) {
-    Serial.println("SDSC");
-  } else if(cardType == CARD_SDHC) {
-    Serial.println("SDHC");
-  } else {
-    Serial.println("UNKNOWN");
-  }
-  
-  uint64_t cardSize = SD.cardSize() / (1024 * 1024);
-  Serial.printf("SD Card Size: %lluMB\n", cardSize);
-  Serial.println("SD Card mounted successfully");
-  return true;
-#endif
-}
-
-bool fileExists(const char* path) {
-#if USE_SPIFFS
-  return SPIFFS.exists(path);
-#else
-  return SD.exists(path);
-#endif
-}
-
-File openFile(const char* path, const char* mode = "r") {
-#if USE_SPIFFS
-  return SPIFFS.open(path, mode);
-#else
-  return SD.open(path, mode);
-#endif
-}
-
-void serveFile(AsyncWebServerRequest *request, const char* filename, const char* contentType) {
-  Serial.printf("Serving %s from %s\n", filename, storageType.c_str());
-  if(fileExists(filename)) {
-#if USE_SPIFFS
-    request->send(SPIFFS, filename, contentType);
-#else
-    request->send(SD, filename, contentType);
-#endif
-  } else {
-    Serial.printf("%s not found in %s\n", filename, storageType.c_str());
-    request->send(404, "text/plain", String(filename) + " not found in " + storageType);
-  }
-}
-
 void setup() {
   Serial.begin(115200);
   delay(1000);
   Serial.println("ESP32 Started");
 
-  // Initialize storage
-  storageInitialized = initStorage();
-  if(!storageInitialized) {
-    Serial.printf("Failed to initialize %s. Web server will not serve files.\n", storageType.c_str());
-    // Continue anyway - the device can still create an AP, just won't serve files
+  // Initialize storage using the StorageManager
+  bool storageOK = Storage.begin(STORAGE_TYPE, SD_CS_PIN);
+  if (!storageOK) {
+    Serial.println("Storage initialization failed. Web server will have limited functionality.");
   }
 
   // Configure AP with static IP
@@ -133,83 +53,134 @@ void setup() {
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
-  // Main routes - serving from storage
-  webServer.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-    if(!storageInitialized) {
-      request->send(500, "text/plain", String("Storage (") + storageType + ") not initialized");
+  // Helper function to serve files
+  auto serveFile = [](AsyncWebServerRequest *request, const String& filename) {
+    if (!Storage.isInitialized()) {
+      request->send(500, "text/plain", "Storage not initialized");
       return;
     }
-    serveFile(request, "/index.html", "text/html");
+    
+    if (Storage.exists(filename)) {
+      String contentType = Storage.getContentType(filename);
+      request->send(*Storage.getFS(), filename, contentType);
+      Serial.println("Served: " + filename + " (" + contentType + ")");
+    } else {
+      request->send(404, "text/plain", filename + " not found in " + Storage.getStorageType());
+      Serial.println("File not found: " + filename);
+    }
+  };
+
+  // Main routes
+  webServer.on("/", HTTP_GET, [serveFile](AsyncWebServerRequest *request) {
+    serveFile(request, "/index.html");
   });
 
-  // Main Page
-  webServer.on("/index.html", HTTP_GET, [](AsyncWebServerRequest *request) {
-    if(!storageInitialized) {
-      request->send(500, "text/plain", String("Storage (") + storageType + ") not initialized");
-      return;
-    }
-    serveFile(request, "/index.html", "text/html");
+  webServer.on("/index.html", HTTP_GET, [serveFile](AsyncWebServerRequest *request) {
+    serveFile(request, "/index.html");
   });
 
-  // CSS file
-  webServer.on("/styles.css", HTTP_GET, [](AsyncWebServerRequest *request) {
-    if(!storageInitialized) {
-      request->send(500, "text/plain", String("Storage (") + storageType + ") not initialized");
-      return;
-    }
-    serveFile(request, "/styles.css", "text/css");
+  webServer.on("/styles.css", HTTP_GET, [serveFile](AsyncWebServerRequest *request) {
+    serveFile(request, "/styles.css");
   });
 
-  // JavaScript file
-  webServer.on("/script.js", HTTP_GET, [](AsyncWebServerRequest *request) {
-    if(!storageInitialized) {
-      request->send(500, "text/plain", String("Storage (") + storageType + ") not initialized");
-      return;
-    }
-    serveFile(request, "/script.js", "application/javascript");
+  webServer.on("/script.js", HTTP_GET, [serveFile](AsyncWebServerRequest *request) {
+    serveFile(request, "/script.js");
+  });
+
+  webServer.on("/favicon.ico", HTTP_GET, [serveFile](AsyncWebServerRequest *request) {
+    serveFile(request, "/favicon.ico");
   });
 
   // Storage info endpoint
   webServer.on("/storage-info", HTTP_GET, [](AsyncWebServerRequest *request) {
-    String info = "Storage Type: " + storageType + "\n";
-    info += "Status: " + String(storageInitialized ? "Initialized" : "Failed") + "\n";
+    StorageInfo info = Storage.getInfo();
     
-    if(storageInitialized) {
-#if USE_SPIFFS
-      info += "Total Bytes: " + String(SPIFFS.totalBytes()) + "\n";
-      info += "Used Bytes: " + String(SPIFFS.usedBytes()) + "\n";
-      info += "Free Bytes: " + String(SPIFFS.totalBytes() - SPIFFS.usedBytes()) + "\n";
-#else
-      uint64_t cardSize = SD.cardSize() / (1024 * 1024);
-      uint64_t totalBytes = SD.totalBytes() / (1024 * 1024);
-      uint64_t usedBytes = SD.usedBytes() / (1024 * 1024);
-      info += "Card Size: " + String((unsigned long)cardSize) + " MB\n";
-      info += "Total: " + String((unsigned long)totalBytes) + " MB\n";
-      info += "Used: " + String((unsigned long)usedBytes) + " MB\n";
-      info += "Free: " + String((unsigned long)(totalBytes - usedBytes)) + " MB\n";
-#endif
+    String response = "Storage Type: " + info.type + "\n";
+    response += "Status: " + String(info.initialized ? "Initialized" : "Failed") + "\n";
+    
+    if (info.initialized) {
+      if (Storage.getCurrentStorage() == STORAGE_SD && !info.cardType.isEmpty()) {
+        response += "Card Type: " + info.cardType + "\n";
+      }
+      
+      // Convert bytes to MB for better readability
+      float totalMB = info.totalBytes / (1024.0 * 1024.0);
+      float usedMB = info.usedBytes / (1024.0 * 1024.0);
+      float freeMB = info.freeBytes / (1024.0 * 1024.0);
+      
+      response += "Total: " + String(totalMB, 2) + " MB\n";
+      response += "Used: " + String(usedMB, 2) + " MB\n";
+      response += "Free: " + String(freeMB, 2) + " MB\n";
     }
     
-    request->send(200, "text/plain", info);
+    request->send(200, "text/plain", response);
+  });
+
+  // File management endpoints
+  webServer.on("/api/files", HTTP_GET, [](AsyncWebServerRequest *request) {
+    if (!Storage.isInitialized()) {
+      request->send(500, "application/json", "{\"error\":\"Storage not initialized\"}");
+      return;
+    }
+    
+    // List files in root directory
+    String json = "{\"files\":[";
+    File root = Storage.openDir("/");
+    if (root) {
+      bool first = true;
+      File file = root.openNextFile();
+      while (file) {
+        if (!first) json += ",";
+        json += "{";
+        json += "\"name\":\"" + String(file.name()) + "\",";
+        json += "\"size\":" + String(file.size()) + ",";
+        json += "\"isDir\":" + String(file.isDirectory() ? "true" : "false");
+        json += "}";
+        first = false;
+        file = root.openNextFile();
+      }
+      root.close();
+    }
+    json += "]}";
+    
+    request->send(200, "application/json", json);
+  });
+
+  // File upload endpoint
+  webServer.on("/api/upload", HTTP_POST, [](AsyncWebServerRequest *request) {
+    request->send(200);
+  }, [](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final) {
+    if (!Storage.isInitialized()) {
+      return;
+    }
+    
+    static File uploadFile;
+    
+    if (index == 0) {
+      // Start of file
+      String path = "/" + filename;
+      uploadFile = Storage.open(path, "w");
+      if (!uploadFile) {
+        Serial.println("Failed to create file: " + path);
+        return;
+      }
+      Serial.println("Starting upload: " + path);
+    }
+    
+    if (len) {
+      uploadFile.write(data, len);
+    }
+    
+    if (final) {
+      uploadFile.close();
+      Serial.println("Upload completed: " + filename + " (" + String(index + len) + " bytes)");
+    }
   });
 
   // Generic static file handler
-  if(storageInitialized) {
-#if USE_SPIFFS
-    webServer.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html");
-#else
-    webServer.serveStatic("/", SD, "/").setDefaultFile("index.html");
-#endif
+  if (Storage.isInitialized()) {
+    webServer.serveStatic("/", *Storage.getFS(), "/").setDefaultFile("index.html");
   }
-
-  // Handle favicon requests
-  webServer.on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest *request) {
-    if(!storageInitialized) {
-      request->send(404, "text/plain", "Storage not available");
-      return;
-    }
-    serveFile(request, "/favicon.ico", "image/x-icon");
-  });
 
   // Captive portal handler
   webServer.onNotFound([](AsyncWebServerRequest *request) {
@@ -227,13 +198,16 @@ void setup() {
 
   webServer.begin();
   Serial.println("Web Server started on port 80");
-  Serial.printf("Using %s for file storage\n", storageType.c_str());
+  Serial.println("Using " + Storage.getStorageType() + " for file storage");
   Serial.print("Access the web interface at: http://");
   Serial.println(WiFi.softAPIP());
-  Serial.println("Storage info available at: http://" + WiFi.softAPIP().toString() + "/storage-info");
+  Serial.println("Endpoints:");
+  Serial.println("  /storage-info - Storage information");
+  Serial.println("  /api/files - List files");
+  Serial.println("  /api/upload - File upload (POST)");
 }
 
-String inputString = "";       // stores user input from Serial
+String inputString = "";
 
 void loop() {
   dnsServer.processNextRequest();
