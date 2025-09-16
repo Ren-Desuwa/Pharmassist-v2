@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PharmaAssist - Physician Portal</title>
+    <style>
+        :root {
+            --Size-1: 0.25rem;
+            --Size-2: 0.5rem;
+            --Size-3: 0.75rem;
+            --Size-4: 1rem;
+            --Size-5: 1.25rem;
+            --Size-6: 1.75rem;
+            --Size-7: 3.75rem;
+            --Size-8: 6.25rem;
+
+            /* Dark theme */
+            --primary-bg: #0a0f1c;
+            --secondary-bg: #1a1f2e;
+            --tertiary-bg: #2a2f3e;
+            --card-bg: rgba(42, 47, 62, 0.95);
+            --card-border: rgba(59, 130, 246, 0.3);
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --accent-color: #3b82f6;
+            --accent-hover: #2563eb;
+            --accent-light: rgba(59, 130, 246, 0.1);
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --info-color: #06b6d4;
+            --border-color: #374151;
+            --input-bg: rgba(55, 65, 81, 0.8);
+            --input-border: #4b5563;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+        }
+
+        [data-theme="light"] {
+            --primary-bg: #f0f9ff;
+            --secondary-bg: #f8fafc;
+            --tertiary-bg: #e2e8f0;
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --card-border: rgba(59, 130, 246, 0.25);
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #64748b;
+            --accent-color: #3b82f6;
+            --accent-hover: #2563eb;
+            --accent-light: rgba(59, 130, 246, 0.08);
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --danger-color: #dc2626;
+            --info-color: #0891b2;
+            --border-color: #e2e8f0;
+            --input-bg: rgba(248, 250, 252, 0.95);
+            --input-border: #cbd5e1;
+            --shadow-color: rgba(59, 130, 246, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--primary-bg);
+            transition: all 0.3s ease;
+            padding: var(--Size-4);
+        }
+
+        /* Simple background gradient */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle at 50% 50%, var(--accent-color)10 0%, transparent 70%);
+            opacity: 0.4;
+            z-index: -1;
+        }
+
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        .login-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 10px 40px var(--shadow-color);
+            width: 100%;
+            max-width: min(1000px, 90vw);
+            min-width: 320px;
+            transition: all 0.3s ease;
+            border: 1px solid var(--card-border);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 500px;
+            overflow: hidden;
+        }
+
+        .login-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 60px var(--shadow-color);
+        }
+
+        /* Left panel - Branding */
+        .brand-panel {
+            padding: var(--Size-6);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+            position: relative;
+        }
+
+        .brand-content {
+            text-align: center;
+        }
+
+        .logo {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--Size-4);
+            margin-bottom: var(--Size-6);
+        }
+
+        .logo-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--accent-color) 0%, var(--info-color) 100%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 40px;
+            font-weight: 600;
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+        }
+
+        .logo-text {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-color) 0%, var(--info-color) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: var(--Size-2);
+        }
+
+        .brand-tagline {
+            color: var(--text-secondary);
+            font-size: 16px;
+            font-weight: 500;
+            opacity: 0.9;
+        }
+
+        .brand-features {
+            margin-top: var(--Size-6);
+            display: flex;
+            flex-direction: column;
+            gap: var(--Size-3);
+        }
+
+        .brand-feature {
+            display: flex;
+            align-items: center;
+            gap: var(--Size-3);
+            color: var(--text-secondary);
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .brand-feature-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-color);
+            font-size: 16px;
+        }
+
+        /* Right panel - Login/Register form */
+        .login-panel {
+            padding: var(--Size-6);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: var(--Size-6);
+        }
+
+        .login-title {
+            font-size: 28px;
+            margin-bottom: var(--Size-3);
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .login-subtitle {
+            color: var(--text-secondary);
+            font-size: 16px;
+            font-weight: 400;
+            opacity: 0.9;
+        }
+
+        /* Mode Toggle */
+        .mode-toggle {
+            display: flex;
+            background: var(--tertiary-bg);
+            border-radius: 12px;
+            padding: var(--Size-1);
+            margin-bottom: var(--Size-6);
+            position: relative;
+        }
+
+        .mode-toggle-btn {
+            flex: 1;
+            padding: var(--Size-3) var(--Size-4);
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 2;
+        }
+
+        .mode-toggle-btn.active {
+            color: var(--text-primary);
+            background: var(--card-bg);
+            box-shadow: 0 2px 8px var(--shadow-color);
+        }
+
+        .form-group {
+            margin-bottom: var(--Size-5);
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: var(--Size-2);
+            font-weight: 500;
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: var(--Size-4);
+            border: 2px solid var(--input-border);
+            border-radius: 12px;
+            background: var(--input-bg);
+            color: var(--text-primary);
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .form-input::placeholder {
+            color: var(--text-muted);
+            opacity: 0.7;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            background: var(--card-bg);
+            box-shadow: 0 0 0 3px var(--accent-light);
+        }
+
+        .btn {
+            padding: var(--Size-4) var(--Size-5);
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--Size-2);
+            width: 100%;
+            transition: all 0.3s ease;
+            margin-top: var(--Size-4);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-color) 0%, var(--info-color) 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .login-footer {
+            text-align: center;
+            margin-top: var(--Size-6);
+            padding-top: var(--Size-4);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .theme-toggle {
+            background: var(--tertiary-bg);
+            border: 2px solid var(--border-color);
+            color: var(--text-primary);
+            padding: var(--Size-2) var(--Size-4);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--Size-2);
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            transform: translateY(-1px);
+            border-color: var(--accent-color);
+            background: var(--accent-light);
+            color: var(--accent-color);
+        }
+
+        /* Toast notifications */
+        .toast-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: var(--Size-4);
+            box-shadow: 0 8px 25px var(--shadow-color);
+            z-index: 1000;
+            max-width: 350px;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .toast-notification.show {
+            transform: translateX(0);
+        }
+
+        .form-container {
+            position: relative;
+            overflow: hidden;
+            min-width: 320px;
+            max-width: 400px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .form-content {
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            min-width: 320px;
+            max-width: 400px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            body {
+                padding: var(--Size-3);
+            }
+            
+            .login-card {
+                grid-template-columns: 1fr;
+                max-width: 450px;
+            }
+            
+            .brand-panel {
+                padding: var(--Size-5);
+            }
+            
+            .login-panel {
+                padding: var(--Size-5);
+            }
+            
+            .logo {
+                flex-direction: row;
+                gap: var(--Size-3);
+            }
+            
+            .logo-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 24px;
+                border-radius: 12px;
+            }
+            
+            .logo-text {
+                font-size: 24px;
+                margin-bottom: 0;
+            }
+            
+            .brand-features {
+                display: none;
+            }
+            
+            .toast-notification {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                max-width: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .login-card {
+                margin: var(--Size-2) 0;
+            }
+            
+            .brand-panel,
+            .login-panel {
+                padding: var(--Size-4);
+            }
+        }
+
+        /* Loading state */
+        .btn.loading {
+            pointer-events: none;
+            opacity: 0.7;
+            position: relative;
+        }
+
+        .btn.loading::after {
+            content: '';
+            width: 16px;
+            height: 16px;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: var(--Size-2);
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Smooth transitions */
+        * {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+
+        /* Focus indicators for accessibility */
+        .form-input:focus,
+        .btn:focus,
+        .theme-toggle:focus,
+        .mode-toggle-btn:focus {
+            outline: 2px solid var(--accent-color);
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body data-theme="dark">
+    <div class="container">
+        <div id="loginPage" class="login-container">
+            <div class="login-card">
+                <!-- Left Panel - Branding -->
+                <div class="brand-panel">
+                    <div class="brand-content">
+                        <div class="logo">
+                            <div class="logo-icon">⚕</div>
+                            <div>
+                                <div class="logo-text">PharmaAssist</div>
+                                <div class="brand-tagline">Advanced Healthcare Solutions</div>
+                            </div>
+                        </div>
+                        
+                        <div class="brand-features">
+                            <div class="brand-feature">
+                                <div class="brand-feature-icon">🔒</div>
+                                <span>HIPAA Compliant Security</span>
+                            </div>
+                            <div class="brand-feature">
+                                <div class="brand-feature-icon">⚡</div>
+                                <span>Real-time Drug Interactions</span>
+                            </div>
+                            <div class="brand-feature">
+                                <div class="brand-feature-icon">📊</div>
+                                <span>Advanced Analytics Dashboard</span>
+                            </div>
+                            <div class="brand-feature">
+                                <div class="brand-feature-icon">🌐</div>
+                                <span>Multi-location Access</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right Panel - Login/Register Form -->
+                <div class="login-panel">
+                    <div class="login-header">
+                        <h2 class="login-title" id="formTitle">Physician Portal</h2>
+                        <p class="login-subtitle" id="formSubtitle">Secure access to Pharmacy management system</p>
+                    </div>
+                    
+                    <!-- Mode Toggle -->
+                    <div class="mode-toggle">
+                        <button type="button" class="mode-toggle-btn active" id="loginModeBtn" onclick="switchMode('login')">
+                            Sign In
+                        </button>
+                        <button type="button" class="mode-toggle-btn" id="registerModeBtn" onclick="switchMode('register')">
+                            Register
+                        </button>
+                    </div>
+
+                    <div class="form-container">
+                        <!-- Login Form -->
+                        <div class="form-content" id="loginForm">
+                            <form id="loginFormElement">
+                                <div class="form-group">
+                                    <label class="form-label" for="loginEmail">Medical License Email</label>
+                                    <input type="email" id="loginEmail" class="form-input" placeholder="physician@hospital.com" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="loginPassword">Secure Password</label>
+                                    <input type="password" id="loginPassword" class="form-input" placeholder="Enter secure password" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <span>Authenticate</span>
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Register Form -->
+                        <div class="form-content" id="registerForm" style="display: none;">
+                            <form id="registerFormElement">
+                                <div class="form-group">
+                                    <label class="form-label" for="registerEmail">Medical License Email</label>
+                                    <input type="email" id="registerEmail" class="form-input" placeholder="physician@hospital.com" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="registerPassword">Create Password</label>
+                                    <input type="password" id="registerPassword" class="form-input" placeholder="Create secure password" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <span>Create Account</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="login-footer">
+                        <button class="theme-toggle" onclick="toggleTheme()">
+                            <span class="theme-toggle-icon">🌙</span>
+                            <span class="theme-toggle-text">Dark Mode</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Logging utility
+        function logEvent(context, details) {
+            const timestamp = new Date().toISOString();
+            const logMsg = `[${timestamp}] ${context} : ${JSON.stringify(details)}`;
+            console.log(logMsg);
+            // Send to backend
+            fetch('/api/log', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ context, details })
+            }).catch(() => {});
+        }
+
+        class AuthManager {
+            constructor() {
+                this.currentMode = 'login';
+                this.initializeEventListeners();
+                this.initializeTheme();
+            }
+
+            initializeEventListeners() {
+                // Form submissions
+                const loginForm = document.getElementById('loginFormElement');
+                const registerForm = document.getElementById('registerFormElement');
+                
+                if (loginForm) {
+                    loginForm.addEventListener('submit', (e) => this.handleLogin(e));
+                }
+                
+                if (registerForm) {
+                    registerForm.addEventListener('submit', (e) => this.handleRegister(e));
+                }
+
+                // Input focus animations
+                const inputs = document.querySelectorAll('.form-input');
+                inputs.forEach(input => {
+                    input.addEventListener('focus', () => {
+                        input.parentElement.querySelector('.form-label').style.color = 'var(--accent-color)';
+                    });
+                    input.addEventListener('blur', () => {
+                        input.parentElement.querySelector('.form-label').style.color = 'var(--text-primary)';
+                    });
+                });
+            }
+
+            initializeTheme() {
+                // Check for saved theme, fallback to dark
+                const savedTheme = localStorage?.getItem('Pharmaassist-theme') || 'dark';
+                document.body.setAttribute('data-theme', savedTheme);
+                this.updateThemeToggle(savedTheme);
+            }
+
+            switchMode(mode) {
+                if (this.currentMode === mode) return;
+                
+                this.currentMode = mode;
+                const loginForm = document.getElementById('loginForm');
+                const registerForm = document.getElementById('registerForm');
+                const loginModeBtn = document.getElementById('loginModeBtn');
+                const registerModeBtn = document.getElementById('registerModeBtn');
+                const formTitle = document.getElementById('formTitle');
+                const formSubtitle = document.getElementById('formSubtitle');
+
+                // Update button states
+                loginModeBtn.classList.toggle('active', mode === 'login');
+                registerModeBtn.classList.toggle('active', mode === 'register');
+
+                // Update form content
+                if (mode === 'login') {
+                    loginForm.style.display = 'block';
+                    registerForm.style.display = 'none';
+                    formTitle.textContent = 'Physician Portal';
+                    formSubtitle.textContent = 'Secure access to Pharmacy management system';
+                } else {
+                    loginForm.style.display = 'none';
+                    registerForm.style.display = 'block';
+                    formTitle.textContent = 'Create Account';
+                    formSubtitle.textContent = 'Join the PharmaAssist healthcare network';
+                }
+
+                logEvent('form', { action: 'switch_mode', mode });
+            }
+
+            async handleLogin(e) {
+                e.preventDefault();
+                const emailInput = document.getElementById('loginEmail');
+                const passwordInput = document.getElementById('loginPassword');
+                const submitButton = e.target.querySelector('button[type="submit"]');
+                const email = emailInput.value.trim();
+                const password = passwordInput.value;
+                
+                logEvent('login', { user: email, action: 'attempt' });
+
+                if (!email || !password) {
+                    this.showNotification('Please enter both email and password.', 'error');
+                    logEvent('login', { user: email, result: 'failed', reason: 'missing fields' });
+                    return;
+                }
+
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    this.showNotification('Please enter a valid email address.', 'error');
+                    logEvent('login', { user: email, result: 'failed', reason: 'invalid email format' });
+                    return;
+                }
+
+                const originalText = submitButton.innerHTML;
+                submitButton.innerHTML = '<span>Authenticating...</span>';
+                submitButton.classList.add('loading');
+                submitButton.disabled = true;
+
+                try {
+                    // For embedded systems, extract username from email
+                    let username = email;
+                    const atIndex = username.indexOf('@');
+                    if (atIndex > 0) {
+                        username = username.substring(0, atIndex);
+                    }
+
+                    // Send credentials to backend
+                    const response = await fetch('/api/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            email: username,
+                            password: password
+                        }),
+                        credentials: 'include'
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        logEvent('login', { user: email, result: 'success', session_token: result.session_token, userInfo: result.user });
+                        sessionStorage.setItem('pharmassist-user', JSON.stringify(result.user));
+                        this.showNotification('Welcome, ' + result.user.name + '!', 'success');
+                        setTimeout(() => {
+                            window.location.href = '/index.html';
+                        }, 1000);
+                    } else {
+                        logEvent('login', { user: email, result: 'failed', backend: result });
+                        this.showNotification(result.message || 'Authentication failed.', 'error');
+                    }
+                } catch (error) {
+                    logEvent('login', { user: email, result: 'error', error: error.toString() });
+                    console.error('Login error:', error);
+                    this.showNotification('Authentication failed. Please check your credentials.', 'error');
+                } finally {
+                    submitButton.innerHTML = originalText;
+                    submitButton.classList.remove('loading');
+                    submitButton.disabled = false;
+                }
+            }
+
+            async handleRegister(e) {
+                e.preventDefault();
+                const emailInput = document.getElementById('registerEmail');
+                const passwordInput = document.getElementById('registerPassword');
+                const submitButton = e.target.querySelector('button[type="submit"]');
+                const email = emailInput.value.trim();
+                const password = passwordInput.value;
+                
+                logEvent('register', { user: email, action: 'attempt' });
+
+                if (!email || !password) {
+                    this.showNotification('Please enter both email and password.', 'error');
+                    logEvent('register', { user: email, result: 'failed', reason: 'missing fields' });
+                    return;
+                }
+
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    this.showNotification('Please enter a valid email address.', 'error');
+                    logEvent('register', { user: email, result: 'failed', reason: 'invalid email format' });
+                    return;
+                }
+
+                if (password.length < 6) {
+                    this.showNotification('Password must be at least 6 characters long.', 'error');
+                    logEvent('register', { user: email, result: 'failed', reason: 'password too short' });
+                    return;
+                }
+
+                const originalText = submitButton.innerHTML;
+                submitButton.innerHTML = '<span>Creating Account...</span>';
+                submitButton.classList.add('loading');
+                submitButton.disabled = true;
+
+                try {
+                    // Send registration data to backend
+                    const response = await fetch('/api/register', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            email: email,
+                            password: password
+                        }),
+                        credentials: 'include'
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        logEvent('register', { user: email, result: 'success', session_token: result.session_token, userInfo: result.user });
+                        sessionStorage.setItem('pharmassist-user', JSON.stringify(result.user));
+                        this.showNotification('Account created successfully! Welcome, ' + result.user.name + '!', 'success');
+                        setTimeout(() => {
+                            window.location.href = '/index.html';
+                        }, 1000);
+                    } else {
+                        logEvent('register', { user: email, result: 'failed', backend: result });
+                        this.showNotification(result.message || 'Registration failed.', 'error');
+                    }
+                } catch (error) {
+                    logEvent('register', { user: email, result: 'error', error: error.toString() });
+                    console.error('Registration error:', error);
+                    this.showNotification('Registration failed. Please try again.', 'error');
+                } finally {
+                    submitButton.innerHTML = originalText;
+                    submitButton.classList.remove('loading');
+                    submitButton.disabled = false;
+                }
+            }
+
+            toggleTheme() {
+                const body = document.body;
+                const currentTheme = body.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                
+                body.setAttribute('data-theme', newTheme);
+                
+                // Save to localStorage if available
+                try {
+                    localStorage.setItem('Pharmaassist-theme', newTheme);
+                } catch (e) {
+                    console.log('localStorage not available');
+                }
+                
+                this.updateThemeToggle(newTheme);
+            }
+
+            updateThemeToggle(theme) {
+                const themeToggle = document.querySelector('.theme-toggle');
+                const icon = themeToggle.querySelector('.theme-toggle-icon');
+                const text = themeToggle.querySelector('.theme-toggle-text');
+                
+                if (theme === 'dark') {
+                    icon.textContent = '☀️';
+                    text.textContent = 'Light Mode';
+                } else {
+                    icon.textContent = '🌙';
+                    text.textContent = 'Dark Mode';
+                }
+            }
+
+            showNotification(message, type = 'info') {
+                // Remove existing notifications
+                const existing = document.querySelectorAll('.toast-notification');
+                existing.forEach(n => n.remove());
+
+                const notification = document.createElement('div');
+                notification.className = `toast-notification toast-${type}`;
+                
+                const colors = {
+                    success: '#10b981',
+                    error: '#ef4444',
+                    warning: '#f59e0b',
+                    info: '#3b82f6'
+                };
+                
+                const icons = {
+                    success: '✓',
+                    error: '✕',
+                    warning: '⚠',
+                    info: 'ℹ'
+                };
+                
+                notification.style.borderLeft = `4px solid ${colors[type]}`;
+                
+                notification.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 12px; font-size: 14px;">
+                        <span style="color: ${colors[type]}; font-weight: bold; font-size: 16px;">
+                            ${icons[type]}
+                        </span>
+                        <span style="color: var(--text-primary); flex: 1;">${message}</span>
+                        <button onclick="this.parentElement.parentElement.remove()" style="
+                            background: none; 
+                            border: none; 
+                            color: var(--text-secondary); 
+                            cursor: pointer; 
+                            font-size: 18px;
+                            padding: 4px;
+                            border-radius: 4px;
+                            transition: all 0.2s ease;
+                        " onmouseover="this.style.background='var(--accent-light)'; this.style.color='var(--accent-color)'" 
+                           onmouseout="this.style.background='none'; this.style.color='var(--text-secondary)'">×</button>
+                    </div>
+                `;
+                
+                document.body.appendChild(notification);
+                
+                setTimeout(() => notification.classList.add('show'), 100);
+                
+                // Auto remove
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                    setTimeout(() => notification.remove(), 300);
+                }, type === 'success' ? 3000 : 5000);
+            }
+        }
+
+        function switchMode(mode) {
+            if (window.authManager) {
+                window.authManager.switchMode(mode);
+            }
+        }
+
+        function toggleTheme() {
+            if (window.authManager) {
+                window.authManager.toggleTheme();
+            }
+        }
+
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            window.authManager = new AuthManager();
+            logEvent('page', { action: 'load', page: 'login.html' });
+        });
+
+        // Fallback initialization
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                if (!window.authManager) {
+                    window.authManager = new AuthManager();
+                }
+            });
+        } else {
+            window.authManager = new AuthManager();
+        }
+    </script>
+</body>
+</html>

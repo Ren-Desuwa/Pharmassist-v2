@@ -3,71 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PharmaAssist - Physician Portal</title>
+    <title>PharmAssist - Physician Portal</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body data-theme="dark">
     <div class="container">
-        <!-- Login Page -->
-        <div id="loginPage" class="login-container">
-            <div class="login-card">
-                <div class="login-header">
-                    <div class="logo">
-                        <div class="logo-icon">⚕</div>
-                        <div class="logo-text">PharmaAssist</div>
-                    </div>
-                    <h2 class="login-title">Physician Portal</h2>
-                    <p class="login-subtitle">Secure access to pharmacy management system</p>
-                </div>
-                <form id="loginForm">
-                    <div class="form-group">
-                        <label class="form-label" for="email">Medical License Email</label>
-                        <input type="email" id="email" class="form-input" placeholder="physician@hospital.com" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label" for="password">Secure Password</label>
-                        <input type="password" id="password" class="form-input" placeholder="Enter secure password" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Authenticate</button>
-                </form>
-                <div class="login-footer">
-                    <button class="theme-toggle" onclick="toggleTheme()">🌓 Toggle Theme</button>
-                </div>
-            </div>
-        </div>
-
         <!-- Dashboard -->
-        <div id="dashboard" class="hidden">
-            <!-- Mobile Header -->
-            <div class="mobile-header">
-                <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
-                <div class="logo">
-                    <div class="logo-icon">⚕</div>
-                    <div class="logo-text">PharmaAssist</div>
-                </div>
-                <div class="mobile-user-actions">
-                    <button class="notification-btn" onclick="showPage('notifications')">
-                        🔔
-                        <span id="notificationBadge" class="notification-badge">3</span>
-                    </button>
-                    <button class="theme-toggle mobile" onclick="toggleTheme()">🌓</button>
-                </div>
-            </div>
-
-            <!-- Desktop Header -->
-            <header class="header desktop-only">
+        <div id="dashboard">
+            <!-- Unified Responsive Header -->
+            <header class="header">
                 <div class="header-content">
+                    <!-- Mobile menu button (visible on mobile) -->
+                    <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                        ☰
+                    </button>
                     <div class="logo">
                         <div class="logo-icon">⚕</div>
-                        <div class="logo-text">PharmaAssist</div>
+                        <div class="logo-text">PharmAssist</div>
                     </div>
                     <div class="user-info">
-                        <div class="notification-center">
-                            <button class="notification-btn" onclick="showPage('notifications')">
-                                🔔 Notifications
-                                <span id="notificationBadgeDesktop" class="notification-badge">3</span>
-                            </button>
-                        </div>
+                        <!-- Notification button (icon only on mobile, text on desktop) -->
+                        <button class="notification-btn" onclick="showPage('notifications')">
+                            <span class="notification-icon" aria-label="Notifications">🔔</span>
+                            <span class="notification-text">Notifications</span>
+                            <span id="notificationBadge" class="notification-badge">3</span>
+                        </button>
                         <span class="user-greeting">Dr. <span id="physicianName">Smith</span></span>
                         <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
                         <button class="btn btn-secondary" onclick="logout()">Sign Out</button>
@@ -152,11 +112,13 @@
                                     <div class="form-row">
                                         <div class="form-col">
                                             <label class="form-label" for="patientName">Patient Full Name *</label>
-                                            <input type="text" id="patientName" class="form-input" placeholder="Enter patient's full name" required>
+                                            <input type="text" id="patientName" class="form-input" placeholder="Enter patient's full name" autocomplete="off" required>
+                                            <div id="patientName-autocomplete" class="autocomplete-list"></div>
                                         </div>
                                         <div class="form-col">
                                             <label class="form-label" for="patientMRN">Medical Record Number *</label>
-                                            <input type="text" id="patientMRN" class="form-input" placeholder="MRN-XXXXXXXXX" required>
+                                            <input type="text" id="patientMRN" class="form-input" placeholder="MRN-XXXXXXXXX" autocomplete="off" required>
+                                            <div id="patientMRN-autocomplete" class="autocomplete-list"></div>
                                         </div>
                                     </div>
                                     <div class="form-row">
@@ -181,39 +143,55 @@
                                 </div>
 
                                 <!-- Medication Information -->
-                                <div class="form-section">
+                                <div class="form-section" id="medications-section">
                                     <h4 class="section-title">Medication Information</h4>
-                                    <div class="form-row">
-                                        <div class="form-col">
-                                            <label class="form-label" for="medicationName">Medication Name *</label>
-                                            <input type="text" id="medicationName" class="form-input" placeholder="Generic or brand name" required>
-                                        </div>
-                                        <div class="form-col">
-                                            <label class="form-label" for="strength">Strength/Concentration *</label>
-                                            <input type="text" id="strength" class="form-input" placeholder="e.g., 500mg, 10mg/ml" required>
-                                        </div>
-                                    </div>
-                                    <div class="form-row">
-                                        <div class="form-col">
-                                            <label class="form-label" for="dosageForm">Dosage Form *</label>
-                                            <select id="dosageForm" class="form-input" required>
-                                                <option value="">Select form</option>
-                                                <option value="tablet">Tablet</option>
-                                                <option value="capsule">Capsule</option>
-                                                <option value="syrup">Syrup</option>
-                                                <option value="injection">Injection</option>
-                                                <option value="cream">Topical Cream</option>
-                                                <option value="drops">Drops</option>
-                                                <option value="inhaler">Inhaler</option>
-                                                <option value="patch">Patch</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-col">
-                                            <label class="form-label" for="quantity">Quantity Required *</label>
-                                            <input type="number" id="quantity" class="form-input" placeholder="Number of units" min="1" required>
+                                    <div id="medication-fields-container">
+                                        <div class="form-section medication-fields">
+                                            <div class="form-row">
+                                                <div class="form-col">
+                                                    <label class="form-label" for="medicationName">Medication Name *</label>
+                                                    <select id="medicationName" name="medicationName" class="form-input" required>
+                                                      <option value="">Select Medication</option>
+                                                      <option value="Amoxicillin">Amoxicillin</option>
+                                                      <option value="Lisinopril">Lisinopril</option>
+                                                      <option value="Metformin">Metformin</option>
+                                                      <option value="Atorvastatin">Atorvastatin</option>
+                                                      <option value="Insulin Glargine">Insulin Glargine</option>
+                                                      <option value="Epinephrine">Epinephrine</option>
+                                                      <option value="Warfarin">Warfarin</option>
+                                                      <option value="Paracetamol">Paracetamol</option>
+                                                      <option value="Azithromycin">Azithromycin</option>
+                                                    </select>
+                                                </div>
+                                                <div class="form-col">
+                                                    <label class="form-label" for="strength">Strength/Concentration *</label>
+                                                    <input type="text" id="strength" name="strength" class="form-input" placeholder="e.g., 500mg, 10mg/ml" required>
+                                                </div>
+                                            </div>
+                                            <div class="form-row">
+                                                <div class="form-col">
+                                                    <label class="form-label" for="dosageForm">Dosage Form *</label>
+                                                    <select id="dosageForm" name="dosageForm" class="form-input" required>
+                                                        <option value="">Select form</option>
+                                                        <option value="tablet">Tablet</option>
+                                                        <option value="capsule">Capsule</option>
+                                                        <option value="syrup">Syrup</option>
+                                                        <option value="injection">Injection</option>
+                                                        <option value="cream">Topical Cream</option>
+                                                        <option value="drops">Drops</option>
+                                                        <option value="inhaler">Inhaler</option>
+                                                        <option value="patch">Patch</option>
+                                                    </select>
+                                                </div>
+                                                <div class="form-col">
+                                                    <label class="form-label" for="quantity">Quantity Required *</label>
+                                                    <input type="number" id="quantity" name="quantity" class="form-input" placeholder="Number of units" min="1" required>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
+                                <button type="button" id="addMedicationBtn" class="btn btn-secondary" style="margin-top: 1rem;">Add Medication</button>
 
                                 <!-- Administration Details -->
                                 <div class="form-section">

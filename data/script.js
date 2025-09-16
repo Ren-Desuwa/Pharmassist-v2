@@ -1,212 +1,69 @@
-// Application State Management
+// Dashboard Application State Management
 class PharmAssistApp {
     constructor() {
         this.currentUser = null;
         this.prescriptions = [];
         this.notifications = [];
+        this.patients = [];
         this.currentPage = 'prescriptionOrder';
         this.isMobileMenuOpen = false;
-        
-        this.initializeData();
+        this.initializeUser();
         this.initializeEventListeners();
+        this.fetchAllData();
     }
 
-    // Initialize sample data
-    initializeData() {
-        // Sample prescription orders
-        this.prescriptions = [
-            {
-                id: 'RX-2024-001',
-                patientName: 'Sarah Johnson',
-                patientMRN: 'MRN-78901234',
-                medicationName: 'Lisinopril',
-                strength: '10mg',
-                dosageForm: 'tablet',
-                quantity: 30,
-                status: 'dispensing',
-                priority: 'routine',
-                date: '2024-01-16',
-                ward: 'cardiology',
-                route: 'oral',
-                frequency: 'once',
-                indication: 'Hypertension management',
-                prescribingPhysician: 'Dr. Smith'
-            },
-            {
-                id: 'RX-2024-002',
-                patientName: 'Michael Rodriguez',
-                patientMRN: 'MRN-56789012',
-                medicationName: 'Insulin Glargine',
-                strength: '100IU/ml',
-                dosageForm: 'injection',
-                quantity: 3,
-                status: 'pending',
-                priority: 'urgent',
-                date: '2024-01-16',
-                ward: 'internal',
-                route: 'subcutaneous',
-                frequency: 'once',
-                indication: 'Diabetes mellitus type 1',
-                prescribingPhysician: 'Dr. Smith'
-            },
-            {
-                id: 'RX-2024-003',
-                patientName: 'Emma Thompson',
-                patientMRN: 'MRN-34567890',
-                medicationName: 'Epinephrine',
-                strength: '1mg/ml',
-                dosageForm: 'injection',
-                quantity: 1,
-                status: 'ready',
-                priority: 'stat',
-                date: '2024-01-16',
-                ward: 'emergency',
-                route: 'intramuscular',
-                frequency: 'stat',
-                indication: 'Anaphylactic reaction',
-                prescribingPhysician: 'Dr. Smith'
-            },
-            {
-                id: 'RX-2024-004',
-                patientName: 'Robert Chen',
-                patientMRN: 'MRN-23456789',
-                medicationName: 'Amoxicillin',
-                strength: '500mg',
-                dosageForm: 'capsule',
-                quantity: 21,
-                status: 'dispensed',
-                priority: 'routine',
-                date: '2024-01-15',
-                ward: 'outpatient',
-                route: 'oral',
-                frequency: 'tid',
-                indication: 'Bacterial pneumonia',
-                prescribingPhysician: 'Dr. Smith',
-                completedDate: '2024-01-15',
-                dispensedBy: 'Pharmacist Jones'
-            },
-            {
-                id: 'RX-2024-005',
-                patientName: 'Lisa Williams',
-                patientMRN: 'MRN-12345678',
-                medicationName: 'Warfarin',
-                strength: '5mg',
-                dosageForm: 'tablet',
-                quantity: 30,
-                status: 'partially-dispensed',
-                priority: 'routine',
-                date: '2024-01-14',
-                ward: 'cardiology',
-                route: 'oral',
-                frequency: 'once',
-                indication: 'Atrial fibrillation',
-                prescribingPhysician: 'Dr. Smith',
-                partialQuantity: 15,
-                partialReason: 'Limited stock available'
+    // Logging utility
+    logEvent(context, details) {
+        const timestamp = new Date().toISOString();
+        const logMsg = `[${timestamp}] ${context} : ${JSON.stringify(details)}`;
+        console.log(logMsg);
+        // Send to backend
+        fetch('/api/log', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ context, details })
+        }).catch(() => {});
+    }
+
+    // Initialize user from session storage and validate session
+    async initializeUser() {
+        const userData = sessionStorage.getItem('pharmassist-user');
+        this.logEvent('index', { session: 'initializing' });
+        if (userData) {
+            this.currentUser = JSON.parse(userData);
+            this.logEvent('index', { session: 'verifying', user: this.currentUser.name });
+            // Validate session with backend
+            try {
+                const res = await fetch('/api/validate-session', { credentials: 'include' });
+                const result = await res.json();
+                this.logEvent('index', { session: 'validate-session response', response: result });
+                if (!result.valid) {
+                    this.logEvent('index', { session: 'verifying', result: 'failed' });
+                    sessionStorage.removeItem('pharmassist-user');
+                    // window.location.href = 'login.html';
+                    return;
+                } else {
+                    this.logEvent('index', { session: 'verifying', result: 'success', session_token: this.getSessionTokenFromCookie(), user: result.username || this.currentUser.name });
+                }
+            } catch (e) {
+                this.logEvent('index', { session: 'verifying', result: 'failed', error: e.toString() });
+                // window.location.href = 'login.html';
+                return;
             }
-        ];
-
-        // Sample notifications
-        this.notifications = [
-            {
-                id: 'NOTIF-001',
-                title: 'Epinephrine Available',
-                content: 'Emergency medication for Patient Emma Thompson (RX-2024-003) is now ready for collection from pharmacy.',
-                type: 'success',
-                priority: 'urgent',
-                time: '5 minutes ago',
-                read: false,
-                actionRequired: true,
-                relatedOrderId: 'RX-2024-003'
-            },
-            {
-                id: 'NOTIF-002',
-                title: 'Stock Alert: Insulin Glargine',
-                content: 'Limited stock remaining. Your prescription RX-2024-002 may experience delays. Alternative formulation available.',
-                type: 'urgent',
-                priority: 'high',
-                time: '15 minutes ago',
-                read: false,
-                actionRequired: true,
-                relatedOrderId: 'RX-2024-002'
-            },
-            {
-                id: 'NOTIF-003',
-                title: 'Prescription Dispensed',
-                content: 'Amoxicillin 500mg for Robert Chen has been successfully dispensed. Patient notified for collection.',
-                type: 'success',
-                priority: 'normal',
-                time: '2 hours ago',
-                read: true,
-                actionRequired: false,
-                relatedOrderId: 'RX-2024-004'
-            },
-            {
-                id: 'NOTIF-004',
-                title: 'Partial Dispensing Notice',
-                content: 'Warfarin 5mg for Lisa Williams partially dispensed (15/30 tablets). Remaining stock expected tomorrow.',
-                type: 'unread',
-                priority: 'normal',
-                time: '1 day ago',
-                read: false,
-                actionRequired: false,
-                relatedOrderId: 'RX-2024-005'
-            }
-        ];
-
-        this.updateNotificationBadges();
-    }
-
-    // Initialize event listeners
-    initializeEventListeners() {
-        // Login form
-        const loginForm = document.getElementById('loginForm');
-        if (loginForm) {
-            loginForm.addEventListener('submit', (e) => this.handleLogin(e));
-        }
-
-        // Prescription form
-        const prescriptionForm = document.getElementById('prescriptionForm');
-        if (prescriptionForm) {
-            prescriptionForm.addEventListener('submit', (e) => this.handlePrescriptionSubmit(e));
-        }
-
-        // Theme toggle
-        document.addEventListener('DOMContentLoaded', () => {
-            const savedTheme = localStorage.getItem('pharmassist-theme') || 'dark';
-            document.body.setAttribute('data-theme', savedTheme);
-        });
-    }
-
-    // Authentication methods
-    handleLogin(e) {
-        e.preventDefault();
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        
-        if (email && password) {
-            // Simulate authentication
-            this.currentUser = {
-                name: this.extractDoctorName(email),
-                email: email,
-                license: 'MD-' + Math.random().toString().substr(2, 9)
-            };
-
-            this.showDashboard();
-            this.loadInitialData();
+            this.updateUserInterface();
+        } else {
+            this.logEvent('index', { session: 'no user in sessionStorage' });
+            // window.location.href = 'login.html';
         }
     }
-
-    extractDoctorName(email) {
-        const name = email.split('@')[0];
-        return name.charAt(0).toUpperCase() + name.slice(1);
+    // Helper to get session token from cookie
+    getSessionTokenFromCookie() {
+        const match = document.cookie.match(/session_token=([^;]+)/);
+        return match ? match[1] : null;
     }
 
-    showDashboard() {
-        document.getElementById('loginPage').classList.add('hidden');
-        document.getElementById('dashboard').classList.remove('hidden');
-        
-        // Update user info in multiple places
+    // Update user interface with current user data
+    updateUserInterface() {
         const elements = ['physicianName', 'sidebarPhysicianName'];
         elements.forEach(id => {
             const element = document.getElementById(id);
@@ -216,20 +73,102 @@ class PharmAssistApp {
         });
     }
 
+    async fetchAllData() {
+        await Promise.all([
+            this.fetchPrescriptions(),
+            this.fetchNotifications(),
+            this.fetchPatients()
+        ]);
+        this.updateNotificationBadges();
+        this.loadInitialData();
+    }
+
+    async fetchPrescriptions() {
+        try {
+            const res = await fetch('/api/prescriptions', { credentials: 'include' });
+            const result = await res.json();
+            if (result.success && Array.isArray(result.data)) {
+                this.prescriptions = result.data;
+            } else {
+                this.prescriptions = [];
+            }
+        } catch {
+            this.prescriptions = [];
+        }
+    }
+
+    async fetchNotifications() {
+        try {
+            const res = await fetch('/api/notifications', { credentials: 'include' });
+            const result = await res.json();
+            if (result.success && Array.isArray(result.data)) {
+                this.notifications = result.data;
+            } else {
+                this.notifications = [];
+            }
+        } catch {
+            this.notifications = [];
+        }
+    }
+
+    async fetchPatients() {
+        try {
+            const res = await fetch('/api/patients', { credentials: 'include' });
+            const result = await res.json();
+            if (result.success && Array.isArray(result.data)) {
+                this.patients = result.data;
+            } else {
+                this.patients = [];
+            }
+        } catch {
+            this.patients = [];
+        }
+    }
+
+    // Initialize event listeners
+    initializeEventListeners() {
+        // Prescription form
+        const prescriptionForm = document.getElementById('prescriptionForm');
+        if (prescriptionForm) {
+            prescriptionForm.addEventListener('submit', (e) => this.handlePrescriptionSubmit(e));
+        }
+
+        // Autocomplete for patient name
+        const patientNameInput = document.getElementById('patientName');
+        const patientMRNInput = document.getElementById('patientMRN');
+        if (patientNameInput) {
+            patientNameInput.addEventListener('input', (e) => this.showPatientAutocomplete('name', e.target.value));
+            patientNameInput.addEventListener('focus', (e) => this.showPatientAutocomplete('name', e.target.value));
+            patientNameInput.addEventListener('blur', () => setTimeout(() => this.hideAutocomplete('patientName-autocomplete'), 200));
+        }
+        if (patientMRNInput) {
+            patientMRNInput.addEventListener('input', (e) => this.showPatientAutocomplete('mrn', e.target.value));
+            patientMRNInput.addEventListener('focus', (e) => this.showPatientAutocomplete('mrn', e.target.value));
+            patientMRNInput.addEventListener('blur', () => setTimeout(() => this.hideAutocomplete('patientMRN-autocomplete'), 200));
+        }
+
+        // Initialize theme
+        const savedTheme = localStorage.getItem('pharmassist-theme') || 'dark';
+        document.body.setAttribute('data-theme', savedTheme);
+    }
+
+    // Logout method
     logout() {
-        this.currentUser = null;
-        document.getElementById('dashboard').classList.add('hidden');
-        document.getElementById('loginPage').classList.remove('hidden');
-        document.getElementById('loginForm').reset();
+        // Clear session data
+        sessionStorage.removeItem('pharmassist-user');
         
         // Close mobile menu if open
         if (this.isMobileMenuOpen) {
             this.toggleMobileMenu();
         }
+        
+        // Redirect to login page
+        window.location.href = 'login.html'; // Adjust path as needed
     }
 
     // Navigation methods
     showPage(pageId) {
+        this.logEvent('index', { session: this.currentUser ? this.currentUser.name : null, action: `open ${pageId}` });
         // Hide all pages
         document.querySelectorAll('.page').forEach(page => {
             page.classList.add('hidden');
@@ -301,50 +240,52 @@ class PharmAssistApp {
     }
 
     // Prescription management methods
-    handlePrescriptionSubmit(e) {
+    async handlePrescriptionSubmit(e) {
+        this.logEvent('index', { session: this.currentUser ? this.currentUser.name : null, action: 'submit prescription' });
         e.preventDefault();
-        
-        const formData = new FormData(e.target);
+        const form = e.target;
+        // Collect all medication fields
+        const medicationBlocks = form.querySelectorAll('.medication-fields');
+        const medications = Array.from(medicationBlocks).map((block, idx) => ({
+            medicationName: block.querySelector('[name="medicationName"]').value,
+            strength: block.querySelector('[name="strength"]').value,
+            dosageForm: block.querySelector('[name="dosageForm"]').value,
+            quantity: parseInt(block.querySelector('[name="quantity"]').value)
+        }));
         const prescriptionData = {
             id: this.generatePrescriptionId(),
             patientName: document.getElementById('patientName').value,
             patientMRN: document.getElementById('patientMRN').value,
-            medicationName: document.getElementById('medicationName').value,
-            strength: document.getElementById('strength').value,
-            dosageForm: document.getElementById('dosageForm').value,
-            quantity: parseInt(document.getElementById('quantity').value),
+            ward: document.getElementById('patientWard').value,
+            bedNumber: document.getElementById('bedNumber').value,
+            medications: medications,
             route: document.getElementById('route').value,
             frequency: document.getElementById('frequency').value,
             priority: document.getElementById('priority').value,
             indication: document.getElementById('indication').value,
             specialInstructions: document.getElementById('specialInstructions').value,
-            ward: document.getElementById('patientWard').value,
-            bedNumber: document.getElementById('bedNumber').value,
             status: 'pending',
             date: new Date().toISOString().split('T')[0],
-            prescribingPhysician: `Dr. ${this.currentUser.name}`
+            prescribingPhysician: `Dr. ${this.currentUser ? this.currentUser.name : ''}`
         };
-        
-        this.prescriptions.unshift(prescriptionData);
-        
-        // Show success notification
-        this.showNotification('Prescription submitted successfully!', 'success');
-        
-        // Reset form
-        e.target.reset();
-        
-        // Add to notifications
-        this.addNotification({
-            title: 'Prescription Submitted',
-            content: `New prescription for ${prescriptionData.patientName} - ${prescriptionData.medicationName} has been submitted to pharmacy.`,
-            type: 'success',
-            priority: prescriptionData.priority === 'stat' ? 'urgent' : 'normal',
-            relatedOrderId: prescriptionData.id
-        });
-        
-        // Reload active prescriptions if on that page
-        if (this.currentPage === 'activePrescriptions') {
-            this.loadActivePrescriptions();
+        // Send to backend
+        try {
+            const res = await fetch('/api/prescription', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(prescriptionData)
+            });
+            const result = await res.json();
+            if (result.success) {
+                this.showNotification('Prescription submitted successfully!', 'success');
+                form.reset();
+                await this.fetchPrescriptions();
+                this.loadActivePrescriptions();
+            } else {
+                this.showNotification(result.message || 'Submission failed.', 'error');
+            }
+        } catch {
+            this.showNotification('Submission failed. Check connection.', 'error');
         }
     }
 
@@ -388,6 +329,7 @@ class PharmAssistApp {
     }
 
     loadNotifications() {
+        this.logEvent('index', { session: this.currentUser ? this.currentUser.name : null, action: 'open notif' });
         const container = document.getElementById('notificationsList');
         if (!container) return;
 
@@ -500,6 +442,56 @@ class PharmAssistApp {
         `;
     }
 
+    // --- Autocomplete logic ---
+    showPatientAutocomplete(type, value) {
+        value = value.trim().toLowerCase();
+        let matches = [];
+        if (!value) {
+            this.hideAutocomplete(type === 'name' ? 'patientName-autocomplete' : 'patientMRN-autocomplete');
+            return;
+        }
+        if (type === 'name') {
+            matches = this.patients.filter(p => p.name.toLowerCase().includes(value));
+        } else {
+            matches = this.patients.filter(p => p.mrn.toLowerCase().includes(value));
+        }
+        const listId = type === 'name' ? 'patientName-autocomplete' : 'patientMRN-autocomplete';
+        const list = document.getElementById(listId);
+        if (!list) return;
+        if (matches.length === 0) {
+            list.innerHTML = '';
+            list.classList.remove('active');
+            return;
+        }
+        list.innerHTML = matches.map(p => `
+            <div class="autocomplete-item" data-patient='${JSON.stringify(p)}'>
+                ${type === 'name' ? p.name : p.mrn} <span style="color:var(--text-muted);font-size:0.9em;">(${type === 'name' ? p.mrn : p.name})</span>
+            </div>
+        `).join('');
+        list.classList.add('active');
+        // Add click listeners
+        Array.from(list.querySelectorAll('.autocomplete-item')).forEach(item => {
+            item.onclick = (e) => {
+                const patient = JSON.parse(item.getAttribute('data-patient'));
+                this.fillPatientFields(patient);
+                this.hideAutocomplete(listId);
+            };
+        });
+    }
+    hideAutocomplete(listId) {
+        const list = document.getElementById(listId);
+        if (list) {
+            list.classList.remove('active');
+            list.innerHTML = '';
+        }
+    }
+    fillPatientFields(patient) {
+        document.getElementById('patientName').value = patient.name;
+        document.getElementById('patientMRN').value = patient.mrn;
+        document.getElementById('patientWard').value = patient.ward;
+        document.getElementById('bedNumber').value = patient.bed;
+    }
+
     // Utility methods
     formatWardName(ward) {
         const wardNames = {
@@ -537,25 +529,14 @@ class PharmAssistApp {
     }
 
     // Action methods
-    collectMedication(prescriptionId) {
-        const prescription = this.prescriptions.find(rx => rx.id === prescriptionId);
-        if (prescription) {
-            prescription.status = 'dispensed';
-            prescription.completedDate = new Date().toISOString().split('T')[0];
-            prescription.dispensedBy = 'Pharmacy Staff';
-            
-            this.showNotification(`${prescription.medicationName} collected successfully!`, 'success');
-            
-            // Add notification
-            this.addNotification({
-                title: 'Medication Collected',
-                content: `${prescription.medicationName} for ${prescription.patientName} has been collected.`,
-                type: 'success',
-                priority: 'normal',
-                relatedOrderId: prescriptionId
-            });
-            
+    async collectMedication(prescriptionId) {
+        try {
+            await fetch(`/api/prescriptions/${prescriptionId}/collect`, { method: 'POST', credentials: 'include' });
+            await this.fetchPrescriptions();
+            this.showNotification('Medication collected successfully!', 'success');
             this.refreshCurrentPage();
+        } catch {
+            this.showNotification('Failed to collect medication.', 'error');
         }
     }
 
@@ -563,25 +544,15 @@ class PharmAssistApp {
         this.showNotification('Prescription modification feature coming soon!', 'info');
     }
 
-    cancelPrescription(prescriptionId) {
+    async cancelPrescription(prescriptionId) {
         if (confirm('Are you sure you want to cancel this prescription order?')) {
-            const prescription = this.prescriptions.find(rx => rx.id === prescriptionId);
-            if (prescription) {
-                prescription.status = 'cancelled';
-                prescription.completedDate = new Date().toISOString().split('T')[0];
-                
-                this.showNotification(`Prescription ${prescriptionId} cancelled.`, 'warning');
-                
-                // Add notification
-                this.addNotification({
-                    title: 'Prescription Cancelled',
-                    content: `Prescription for ${prescription.patientName} - ${prescription.medicationName} has been cancelled.`,
-                    type: 'unread',
-                    priority: 'normal',
-                    relatedOrderId: prescriptionId
-                });
-                
+            try {
+                await fetch(`/api/prescriptions/${prescriptionId}/cancel`, { method: 'POST', credentials: 'include' });
+                await this.fetchPrescriptions();
+                this.showNotification('Prescription cancelled.', 'warning');
                 this.refreshCurrentPage();
+            } catch {
+                this.showNotification('Failed to cancel prescription.', 'error');
             }
         }
     }
@@ -609,22 +580,23 @@ class PharmAssistApp {
         }
     }
 
-    markAsRead(notificationId) {
-        const notification = this.notifications.find(n => n.id === notificationId);
-        if (notification) {
-            notification.read = true;
+    async markAsRead(notificationId) {
+        try {
+            await fetch(`/api/notifications/${notificationId}/read`, { method: 'POST', credentials: 'include' });
+            await this.fetchNotifications();
             this.updateNotificationBadges();
             this.loadNotifications();
-        }
+        } catch {}
     }
 
-    markAllAsRead() {
-        this.notifications.forEach(notification => {
-            notification.read = true;
-        });
-        this.updateNotificationBadges();
-        this.loadNotifications();
-        this.showNotification('All notifications marked as read.', 'success');
+    async markAllAsRead() {
+        try {
+            await fetch('/api/notifications/mark-all-read', { method: 'POST', credentials: 'include' });
+            await this.fetchNotifications();
+            this.updateNotificationBadges();
+            this.loadNotifications();
+            this.showNotification('All notifications marked as read.', 'success');
+        } catch {}
     }
 
     // Notification management
@@ -793,24 +765,91 @@ let app;
 
 document.addEventListener('DOMContentLoaded', function() {
     app = new PharmAssistApp();
-    
     // Set initial theme
     const savedTheme = localStorage.getItem('pharmassist-theme') || 'dark';
     document.body.setAttribute('data-theme', savedTheme);
-    
+    // Load initial data
+    app.loadInitialData();
     // Handle window resize for mobile menu
     window.addEventListener('resize', function() {
         if (window.innerWidth > 768 && app.isMobileMenuOpen) {
             app.toggleMobileMenu();
         }
     });
-    
     // Handle back button on mobile
     window.addEventListener('popstate', function() {
         if (app.isMobileMenuOpen) {
             app.toggleMobileMenu();
         }
     });
+    // Add Medication logic
+    const maxMedications = 3;
+    const addBtn = document.getElementById('addMedicationBtn');
+    const container = document.getElementById('medication-fields-container');
+    let medCount = 1;
+    if (addBtn && container) {
+        addBtn.onclick = function() {
+            if (medCount >= maxMedications) return;
+            medCount++;
+            const medDiv = document.createElement('div');
+            medDiv.className = 'form-section medication-fields';
+            medDiv.innerHTML = `
+                <div class="form-row">
+                    <div class="form-col">
+                        <label class="form-label" for="medicationName">Medication Name *</label>
+                        <select id="medicationName" name="medicationName" class="form-input" required data-medid="0">
+                            <option value="">Select Medication</option>
+                            <option value="Amoxicillin">Amoxicillin</option>
+                            <option value="Lisinopril">Lisinopril</option>
+                            <option value="Metformin">Metformin</option>
+                            <option value="Atorvastatin">Atorvastatin</option>
+                            <option value="Insulin Glargine">Insulin Glargine</option>
+                            <option value="Epinephrine">Epinephrine</option>
+                            <option value="Warfarin">Warfarin</option>
+                            <option value="Paracetamol">Paracetamol</option>
+                            <option value="Azithromycin">Azithromycin</option>
+                        </select>
+                        <div id="medication-autocomplete-0" class="autocomplete-list"></div>
+                    </div>
+                    <div class="form-col">
+                        <label class="form-label">Strength/Concentration *</label>
+                        <input type="text" name="strength" class="form-input" placeholder="e.g., 500mg, 10mg/ml" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <label class="form-label">Dosage Form *</label>
+                        <select name="dosageForm" class="form-input" required>
+                            <option value="">Select form</option>
+                            <option value="tablet">Tablet</option>
+                            <option value="capsule">Capsule</option>
+                            <option value="syrup">Syrup</option>
+                            <option value="injection">Injection</option>
+                            <option value="cream">Topical Cream</option>
+                            <option value="drops">Drops</option>
+                            <option value="inhaler">Inhaler</option>
+                            <option value="patch">Patch</option>
+                        </select>
+                    </div>
+                    <div class="form-col">
+                        <label class="form-label">Quantity Required *</label>
+                        <input type="number" name="quantity" class="form-input" placeholder="Number of units" min="1" required>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-danger remove-med-btn" style="margin-bottom:1rem;">Remove</button>
+            `;
+            container.appendChild(medDiv);
+            updateAddBtn();
+            medDiv.querySelector('.remove-med-btn').onclick = function() {
+                medDiv.remove();
+                medCount--;
+                updateAddBtn();
+            };
+        };
+        function updateAddBtn() {
+            addBtn.disabled = medCount >= maxMedications;
+        }
+    }
 });
 
 // Export for potential module usage
