@@ -886,6 +886,121 @@ textarea.form-input {
   font-family: inherit;
 }
 
+/* ===== MEDICATION FIELDS SPECIFIC STYLES ===== */
+.medication-fields {
+  position: relative;
+  padding: var(--Size-5);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--Size-4);
+  background-color: var(--surface-elevated);
+  transition: all var(--transition-normal);
+}
+
+.medication-fields:hover {
+  border-color: var(--accent-color);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+}
+
+.medication-fields:first-child {
+  background-color: transparent;
+  border: none;
+  padding: 0;
+}
+
+.medication-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--Size-4);
+  padding-bottom: var(--Size-2);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.medication-title {
+  font-size: var(--Size-4);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.remove-medication-btn {
+  padding: var(--Size-1) var(--Size-3);
+  font-size: 0.75rem;
+  min-width: auto;
+}
+
+/* Enhanced Add Medication Button */
+#addMedicationBtn {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: var(--Size-2);
+  margin-top: var(--Size-4);
+  margin-bottom: var(--Size-6);
+  width: 100%;
+  background: linear-gradient(135deg, var(--accent-color), var(--info-color));
+  border: none;
+  color: white;
+  font-weight: 600;
+  padding: var(--Size-4) var(--Size-6);
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+#addMedicationBtn::before {
+  content: '💊';
+  font-size: var(--Size-5);
+}
+
+#addMedicationBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+}
+
+#addMedicationBtn:disabled,
+#addMedicationBtn.btn-disabled {
+  background: var(--bg-tertiary);
+  color: var(--text-disabled);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+#addMedicationBtn:disabled::before,
+#addMedicationBtn.btn-disabled::before {
+  content: '⚠️';
+}
+
+/* Ensure button visibility on mobile */
+@media (max-width: 768px) {
+  #addMedicationBtn {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative !important;
+    margin: var(--Size-4) 0 var(--Size-6) 0;
+    padding: var(--Size-4);
+    font-size: 0.875rem;
+  }
+  
+  .medication-fields {
+    padding: var(--Size-4);
+  }
+  
+  .medication-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--Size-3);
+  }
+  
+  .remove-medication-btn {
+    align-self: flex-end;
+  }
+}
+
 /* ===== ENHANCED AUTOCOMPLETE ===== */
 .autocomplete-list {
   position: absolute;
@@ -1416,32 +1531,6 @@ textarea.form-input {
     top: var(--Size-4);
     max-width: none;
   }
-}
-
-/* ===== MEDICATION FIELDS ===== */
-.medication-fields {
-  position: relative;
-  padding: var(--Size-5);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-lg);
-  margin-bottom: var(--Size-4);
-  background-color: var(--bg-tertiary);
-  transition: all var(--transition-normal);
-}
-
-.medication-fields:hover {
-  border-color: var(--accent-color);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
-}
-
-.medication-fields:first-child {
-  background-color: transparent;
-  border: none;
-  padding: 0;
-}
-
-.remove-med-btn {
-  margin-top: var(--Size-4);
 }
 
 /* ===== FOCUS INDICATORS ===== */

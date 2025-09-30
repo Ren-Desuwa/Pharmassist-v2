@@ -546,7 +546,7 @@
                             <form id="loginFormElement">
                                 <div class="form-group">
                                     <label class="form-label" for="loginEmail">Medical License Email</label>
-                                    <input type="email" id="loginEmail" class="form-input" placeholder="physician@hospital.com" required>
+                                    <input type="text" id="loginEmail" class="form-input" placeholder="Username or Email" required pattern="^(?:[A-Za-z0-9 _.-]+|[^\s@]+@[^\s@]+\.[^\s@]+)$" title="Enter a valid username (letters, numbers, ., _, -, space) or a valid email">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" for="loginPassword">Secure Password</label>
@@ -561,6 +561,10 @@
                         <!-- Register Form -->
                         <div class="form-content" id="registerForm" style="display: none;">
                             <form id="registerFormElement">
+                                <div class="form-group">
+                                    <label class="form-label" for="registerUsername">Username</label>
+                                    <input type="text" id="registerUsername" class="form-input" placeholder="Dr.Username" required>
+                                </div>
                                 <div class="form-group">
                                     <label class="form-label" for="registerEmail">Medical License Email</label>
                                     <input type="email" id="registerEmail" class="form-input" placeholder="physician@hospital.com" required>
@@ -687,10 +691,27 @@
                     return;
                 }
 
+                // Regex for email only
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailRegex.test(email)) {
-                    this.showNotification('Please enter a valid email address.', 'error');
-                    logEvent('login', { user: email, result: 'failed', reason: 'invalid email format' });
+
+                // Regex for username only (letters, numbers, space, underscore, dash)
+                const usernameRegex = /^[A-Za-z0-9 _-]+$/;
+
+                let type = null;
+                let loginData = {};
+
+                if (emailRegex.test(email)) {
+                    type = 'email';
+                    loginData = { type: type, email: email, password: password };
+                } else if (usernameRegex.test(email)) {
+                    type = 'username';
+                    loginData = { type: type, username: email, password: password };
+                } else {
+                    this.showNotification(
+                        'Please enter a valid email address or username.',
+                        'error'
+                    );
+                    logEvent('login', { user: email, result: 'failed', reason: 'invalid format' });
                     return;
                 }
 
@@ -700,23 +721,13 @@
                 submitButton.disabled = true;
 
                 try {
-                    // For embedded systems, extract username from email
-                    let username = email;
-                    const atIndex = username.indexOf('@');
-                    if (atIndex > 0) {
-                        username = username.substring(0, atIndex);
-                    }
-
                     // Send credentials to backend
                     const response = await fetch('/api/login', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({
-                            email: username,
-                            password: password
-                        }),
+                        body: JSON.stringify(loginData),
                         credentials: 'include'
                     });
 
@@ -733,7 +744,7 @@
                         logEvent('login', { user: email, result: 'failed', backend: result });
                         this.showNotification(result.message || 'Authentication failed.', 'error');
                     }
-                } catch (error) {
+                        sessionStorage.setItem('pharmaassist-user', JSON.stringify(result.user));
                     logEvent('login', { user: email, result: 'error', error: error.toString() });
                     console.error('Login error:', error);
                     this.showNotification('Authentication failed. Please check your credentials.', 'error');
@@ -746,9 +757,11 @@
 
             async handleRegister(e) {
                 e.preventDefault();
+                const usernameInput = document.getElementById('registerUsername');
                 const emailInput = document.getElementById('registerEmail');
                 const passwordInput = document.getElementById('registerPassword');
                 const submitButton = e.target.querySelector('button[type="submit"]');
+                const username = usernameInput.value.trim();
                 const email = emailInput.value.trim();
                 const password = passwordInput.value;
                 
@@ -757,6 +770,13 @@
                 if (!email || !password) {
                     this.showNotification('Please enter both email and password.', 'error');
                     logEvent('register', { user: email, result: 'failed', reason: 'missing fields' });
+                    return;
+                }
+
+                const usernameRegex = /^[A-Za-z0-9 _.-]+$/;
+                if (!usernameRegex.test(email.split('@')[0])) {
+                    this.showNotification('Username can only contain letters, numbers, spaces, underscores, periods, and dashes.', 'error');
+                    logEvent('register', { user: email, result: 'failed', reason: 'invalid username format' });
                     return;
                 }
 
@@ -786,6 +806,7 @@
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
+                            username: username,
                             email: email,
                             password: password
                         }),

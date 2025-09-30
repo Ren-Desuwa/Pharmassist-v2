@@ -7,6 +7,8 @@ class PharmAssistApp {
         this.patients = [];
         this.currentPage = 'prescriptionOrder';
         this.isMobileMenuOpen = false;
+        this.maxMedications = 3; // Increased limit
+        this.medicationCount = 1;
         this.initializeUser();
         this.initializeEventListeners();
         this.fetchAllData();
@@ -40,22 +42,23 @@ class PharmAssistApp {
                 if (!result.valid) {
                     this.logEvent('index', { session: 'verifying', result: 'failed' });
                     sessionStorage.removeItem('pharmassist-user');
-                    // window.location.href = 'login.html';
+                    window.location.href = 'login.html';
                     return;
                 } else {
                     this.logEvent('index', { session: 'verifying', result: 'success', session_token: this.getSessionTokenFromCookie(), user: result.username || this.currentUser.name });
                 }
             } catch (e) {
                 this.logEvent('index', { session: 'verifying', result: 'failed', error: e.toString() });
-                // window.location.href = 'login.html';
+                window.location.href = 'login.html';
                 return;
             }
             this.updateUserInterface();
         } else {
             this.logEvent('index', { session: 'no user in sessionStorage' });
-            // window.location.href = 'login.html';
+            window.location.href = 'login.html';
         }
     }
+
     // Helper to get session token from cookie
     getSessionTokenFromCookie() {
         const match = document.cookie.match(/session_token=([^;]+)/);
@@ -147,9 +150,136 @@ class PharmAssistApp {
             patientMRNInput.addEventListener('blur', () => setTimeout(() => this.hideAutocomplete('patientMRN-autocomplete'), 200));
         }
 
+        // Initialize medication management
+        this.initializeMedicationManagement();
+
         // Initialize theme
         const savedTheme = localStorage.getItem('pharmassist-theme') || 'dark';
         document.body.setAttribute('data-theme', savedTheme);
+    }
+
+    // Initialize medication management system
+    initializeMedicationManagement() {
+        const addBtn = document.getElementById('addMedicationBtn');
+        if (addBtn) {
+            addBtn.addEventListener('click', () => this.addMedicationField());
+            this.updateAddButtonVisibility();
+        }
+    }
+
+    // Add new medication field
+    addMedicationField() {
+        if (this.medicationCount >= this.maxMedications) return;
+
+        this.medicationCount++;
+        const container = document.getElementById('medication-fields-container');
+        if (!container) return;
+
+        const medDiv = document.createElement('div');
+        medDiv.className = 'form-section medication-fields';
+        medDiv.setAttribute('data-medication-index', this.medicationCount - 1);
+        
+        medDiv.innerHTML = `
+            <div class="medication-header">
+                <h5 class="medication-title">Medication ${this.medicationCount}</h5>
+                <button type="button" class="btn btn-sm btn-danger remove-medication-btn">
+                    Remove
+                </button>
+            </div>
+            <div class="form-row">
+                <div class="form-col">
+                    <label class="form-label">Medication Name *</label>
+                    <select name="medicationName" class="form-input" required>
+                        <option value="">Select Medication</option>
+                        <option value="Medicine 1">Medicine 1</option>
+                        <option value="Medicine 2">Medicine 2</option>
+                        <option value="Medicine 3">Medicine 3</option>
+                        <option value="Medicine 4">Medicine 4</option>
+                        <option value="Medicine 5">Medicine 5</option>
+                        <option value="Medicine 6">Medicine 6</option>
+                        <option value="Medicine 7">Medicine 7</option>
+                        <option value="Medicine 8">Medicine 8</option>
+                        <option value="Medicine 9">Medicine 9</option>
+                    </select>
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Strength/Concentration *</label>
+                    <select name="strength" class="form-input" required>
+                        <option value="">Select strength</option>
+                        <option value="500mg">500mg</option>
+                        <option value="250mg">250mg</option>
+                        <option value="100mg">100mg</option>
+                        <option value="10mg">10mg</option>
+                        <option value="5mg">5mg</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-col">
+                    <label class="form-label">Dosage Form *</label>
+                    <select name="dosageForm" class="form-input" required>
+                        <option value="">Select form</option>
+                        <option value="capsule">Capsule</option>   
+                        <option value="tablet">Tablet</option>
+                    </select>
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Dosing Frequency *</label>
+                    <select name="frequency" class="form-input" required>
+                        <option value="">Select frequency</option>
+                        <option value="once">Once a day (QD)</option>
+                        <option value="bid">Twice a day (BID)</option>
+                        <option value="tid">Three times a day (TID)</option>
+                    </select>
+                </div>
+            </div>
+        `;
+
+        container.appendChild(medDiv);
+
+        // Add event listener to remove button
+        const removeBtn = medDiv.querySelector('.remove-medication-btn');
+        removeBtn.addEventListener('click', () => this.removeMedicationField(medDiv));
+
+        this.updateAddButtonVisibility();
+        this.updateMedicationNumbers();
+    }
+
+    // Remove medication field
+    removeMedicationField(medDiv) {
+        medDiv.remove();
+        this.medicationCount--;
+        this.updateAddButtonVisibility();
+        this.updateMedicationNumbers();
+    }
+
+    // Update medication field numbers
+    updateMedicationNumbers() {
+        const medicationFields = document.querySelectorAll('.medication-fields');
+        medicationFields.forEach((field, index) => {
+            const title = field.querySelector('.medication-title');
+            if (title) {
+                title.textContent = `Medication ${index + 1}`;
+            }
+            field.setAttribute('data-medication-index', index);
+        });
+    }
+
+    // Update add button visibility and state
+    updateAddButtonVisibility() {
+        const addBtn = document.getElementById('addMedicationBtn');
+        if (addBtn) {
+            addBtn.disabled = this.medicationCount >= this.maxMedications;
+            addBtn.style.display = 'flex'; // Ensure it's always visible
+            
+            if (this.medicationCount >= this.maxMedications) {
+                addBtn.textContent = `Maximum ${this.maxMedications} medications allowed`;
+                addBtn.classList.add('btn-disabled');
+            } else {
+                addBtn.textContent = `Add Medication (${this.medicationCount}/${this.maxMedications})`;
+                addBtn.classList.remove('btn-disabled');
+            }
+        }
     }
 
     // Logout method
@@ -163,7 +293,7 @@ class PharmAssistApp {
         }
         
         // Redirect to login page
-        window.location.href = 'login.html'; // Adjust path as needed
+        window.location.href = 'login.html';
     }
 
     // Navigation methods
@@ -244,30 +374,45 @@ class PharmAssistApp {
         this.logEvent('index', { session: this.currentUser ? this.currentUser.name : null, action: 'submit prescription' });
         e.preventDefault();
         const form = e.target;
+        
         // Collect all medication fields
         const medicationBlocks = form.querySelectorAll('.medication-fields');
-        const medications = Array.from(medicationBlocks).map((block, idx) => ({
-            medicationName: block.querySelector('[name="medicationName"]').value,
-            strength: block.querySelector('[name="strength"]').value,
-            dosageForm: block.querySelector('[name="dosageForm"]').value,
-            quantity: parseInt(block.querySelector('[name="quantity"]').value)
-        }));
+        const medications = Array.from(medicationBlocks).map((block, idx) => {
+            const medicationName = block.querySelector('[name="medicationName"]')?.value;
+            const strength = block.querySelector('[name="strength"]')?.value;
+            const dosageForm = block.querySelector('[name="dosageForm"]')?.value;
+            const frequency = block.querySelector('[name="frequency"]')?.value;
+
+            return {
+                medicationName: medicationName || '',
+                strength: strength || '',
+                dosageForm: dosageForm || '',
+                frequency: frequency || ''
+            };
+        });
+
+        // Filter out empty medications
+        const validMedications = medications.filter(med => 
+            med.medicationName && med.strength && med.dosageForm && med.frequency
+        );
+
+        if (validMedications.length === 0) {
+            this.showNotification('Please add at least one complete medication.', 'error');
+            return;
+        }
+
         const prescriptionData = {
             id: this.generatePrescriptionId(),
             patientName: document.getElementById('patientName').value,
             patientMRN: document.getElementById('patientMRN').value,
             ward: document.getElementById('patientWard').value,
             bedNumber: document.getElementById('bedNumber').value,
-            medications: medications,
-            route: document.getElementById('route').value,
-            frequency: document.getElementById('frequency').value,
-            priority: document.getElementById('priority').value,
-            indication: document.getElementById('indication').value,
-            specialInstructions: document.getElementById('specialInstructions').value,
+            medications: validMedications,
             status: 'pending',
             date: new Date().toISOString().split('T')[0],
-            prescribingPhysician: `Dr. ${this.currentUser ? this.currentUser.name : ''}`
+            prescribingPhysician: `Dr. ${this.currentUser ? this.currentUser.name : 'Smith'}`
         };
+
         // Send to backend
         try {
             const res = await fetch('/api/prescription', {
@@ -275,17 +420,53 @@ class PharmAssistApp {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(prescriptionData)
             });
-            const result = await res.json();
+            const text = await res.text();
+            let result = {};
+            try {
+                result = JSON.parse(text);
+            } catch (err) {
+                this.logEvent('index-submit', { stage: 'json-parse-error', error: err.message, raw: text });
+            }
+
+            this.logEvent('index-submit', {
+                stage: 'response',
+                ok: res.ok,
+                status: res.status,
+                statusText: res.statusText,
+                raw: text,
+                parsed: result
+            });
+
             if (result.success) {
-                this.showNotification('Prescription submitted successfully!', 'success');
+                this.showNotification('Prescription submitted successfully! ', 'success');
                 form.reset();
                 await this.fetchPrescriptions();
                 this.loadActivePrescriptions();
+                return; // Prevent further execution
             } else {
                 this.showNotification(result.message || 'Submission failed.', 'error');
+                return;
             }
         } catch {
+            this.logEvent('index-submit', { stage: 'fetch-error', error: err.message });
             this.showNotification('Submission failed. Check connection.', 'error');
+            return;
+        }
+        
+    }
+
+    // Reset prescription form
+    resetPrescriptionForm() {
+        const form = document.getElementById('prescriptionForm');
+        if (form) {
+            form.reset();
+            
+            // Remove additional medication fields
+            const additionalMeds = document.querySelectorAll('.medication-fields[data-medication-index]:not([data-medication-index="0"])');
+            additionalMeds.forEach(field => field.remove());
+            
+            this.medicationCount = 1;
+            this.updateAddButtonVisibility();
         }
     }
 
@@ -349,16 +530,22 @@ class PharmAssistApp {
         const actionButtons = isActive ? this.createActiveOrderActions(prescription) : '';
         const completionInfo = !isActive ? this.createCompletionInfo(prescription) : '';
 
+        // Handle multiple medications
+        const medicationsDisplay = prescription.medications ? 
+            prescription.medications.map(med => 
+                `${med.medicationName} ${med.strength} (${med.dosageForm})`
+            ).join(', ') : 
+            `${prescription.medicationName} ${prescription.strength} (${prescription.dosageForm})`;
+
         return `
-            <div class="order-item">
+            <div class="order-item" data-order-id="${prescription.id}">
                 <div class="order-info">
-                    <h4>${prescription.medicationName} ${prescription.strength} (${prescription.dosageForm})</h4>
+                    <h4>${medicationsDisplay}</h4>
                     <div class="order-meta">
                         <div class="meta-row"><strong>Patient:</strong> ${prescription.patientName} (${prescription.patientMRN})</div>
-                        <div class="meta-row"><strong>Quantity:</strong> ${prescription.quantity} units | <strong>Route:</strong> ${prescription.route} | <strong>Frequency:</strong> ${prescription.frequency}</div>
                         <div class="meta-row"><strong>Ward:</strong> ${this.formatWardName(prescription.ward)} ${prescription.bedNumber ? `| Bed: ${prescription.bedNumber}` : ''}</div>
-                        <div class="meta-row"><strong>Indication:</strong> ${prescription.indication || 'Not specified'}</div>
                         <div class="meta-row"><strong>Order Date:</strong> ${this.formatDate(prescription.date)} | <strong>ID:</strong> ${prescription.id}</div>
+                        <div class="meta-row"><strong>Physician:</strong> ${prescription.prescribingPhysician}</div>
                         ${completionInfo}
                     </div>
                 </div>
@@ -442,7 +629,7 @@ class PharmAssistApp {
         `;
     }
 
-    // --- Autocomplete logic ---
+    // Autocomplete logic
     showPatientAutocomplete(type, value) {
         value = value.trim().toLowerCase();
         let matches = [];
@@ -478,6 +665,7 @@ class PharmAssistApp {
             };
         });
     }
+
     hideAutocomplete(listId) {
         const list = document.getElementById(listId);
         if (list) {
@@ -485,6 +673,7 @@ class PharmAssistApp {
             list.innerHTML = '';
         }
     }
+
     fillPatientFields(patient) {
         document.getElementById('patientName').value = patient.name;
         document.getElementById('patientMRN').value = patient.mrn;
@@ -765,91 +954,27 @@ let app;
 
 document.addEventListener('DOMContentLoaded', function() {
     app = new PharmAssistApp();
+    
     // Set initial theme
     const savedTheme = localStorage.getItem('pharmassist-theme') || 'dark';
     document.body.setAttribute('data-theme', savedTheme);
+    
     // Load initial data
     app.loadInitialData();
+    
     // Handle window resize for mobile menu
     window.addEventListener('resize', function() {
         if (window.innerWidth > 768 && app.isMobileMenuOpen) {
             app.toggleMobileMenu();
         }
     });
+    
     // Handle back button on mobile
     window.addEventListener('popstate', function() {
         if (app.isMobileMenuOpen) {
             app.toggleMobileMenu();
         }
     });
-    // Add Medication logic
-    const maxMedications = 3;
-    const addBtn = document.getElementById('addMedicationBtn');
-    const container = document.getElementById('medication-fields-container');
-    let medCount = 1;
-    if (addBtn && container) {
-        addBtn.onclick = function() {
-            if (medCount >= maxMedications) return;
-            medCount++;
-            const medDiv = document.createElement('div');
-            medDiv.className = 'form-section medication-fields';
-            medDiv.innerHTML = `
-                <div class="form-row">
-                    <div class="form-col">
-                        <label class="form-label" for="medicationName">Medication Name *</label>
-                        <select id="medicationName" name="medicationName" class="form-input" required data-medid="0">
-                            <option value="">Select Medication</option>
-                            <option value="Amoxicillin">Amoxicillin</option>
-                            <option value="Lisinopril">Lisinopril</option>
-                            <option value="Metformin">Metformin</option>
-                            <option value="Atorvastatin">Atorvastatin</option>
-                            <option value="Insulin Glargine">Insulin Glargine</option>
-                            <option value="Epinephrine">Epinephrine</option>
-                            <option value="Warfarin">Warfarin</option>
-                            <option value="Paracetamol">Paracetamol</option>
-                            <option value="Azithromycin">Azithromycin</option>
-                        </select>
-                        <div id="medication-autocomplete-0" class="autocomplete-list"></div>
-                    </div>
-                    <div class="form-col">
-                        <label class="form-label">Strength/Concentration *</label>
-                        <input type="text" name="strength" class="form-input" placeholder="e.g., 500mg, 10mg/ml" required>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-col">
-                        <label class="form-label">Dosage Form *</label>
-                        <select name="dosageForm" class="form-input" required>
-                            <option value="">Select form</option>
-                            <option value="tablet">Tablet</option>
-                            <option value="capsule">Capsule</option>
-                            <option value="syrup">Syrup</option>
-                            <option value="injection">Injection</option>
-                            <option value="cream">Topical Cream</option>
-                            <option value="drops">Drops</option>
-                            <option value="inhaler">Inhaler</option>
-                            <option value="patch">Patch</option>
-                        </select>
-                    </div>
-                    <div class="form-col">
-                        <label class="form-label">Quantity Required *</label>
-                        <input type="number" name="quantity" class="form-input" placeholder="Number of units" min="1" required>
-                    </div>
-                </div>
-                <button type="button" class="btn btn-danger remove-med-btn" style="margin-bottom:1rem;">Remove</button>
-            `;
-            container.appendChild(medDiv);
-            updateAddBtn();
-            medDiv.querySelector('.remove-med-btn').onclick = function() {
-                medDiv.remove();
-                medCount--;
-                updateAddBtn();
-            };
-        };
-        function updateAddBtn() {
-            addBtn.disabled = medCount >= maxMedications;
-        }
-    }
 });
 
 // Export for potential module usage

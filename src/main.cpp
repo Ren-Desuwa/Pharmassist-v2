@@ -3,17 +3,35 @@
 #include <ESPmDNS.h>
 #include <ESPAsyncWebServer.h>
 #include <DNSServer.h>
-#include <SPIFFS.h>
 #include <SD.h>
 #include <SPI.h>
 #include <ArduinoJson.h>
 #include <map>
 #include <vector>
+#include "ESPrxtxESP.h"
 
-// Storage configuration
 #define SD_CS_PIN 5   // SD Card Chip Select pin
+// VSPI
+// MISO -> GPIO19
+// MOSI -> GPIO23
+// SCK -> GPIO18
+// CS  -> GPIO5
 
-const char* AP_ssid = "Pharmassist v1";
+// RF ID READER PINS
+// #define SS_PIN   15   // SDA
+// #define RST_PIN  27   // RST
+// #define HSPI_SCK 14
+// #define HSPI_MISO 12
+// #define HSPI_MOSI 13
+
+// SPIClass hspi(HSPI);
+// MFRC522 mfrc522(SS_PIN, RST_PIN);
+
+
+const char* AP_ssid = "PharmaAssist";
+const char* AP_password = "pharma1234";
+
+ESPrxtxESP comm(&Serial2);
 
 AsyncWebServer webServer(80);
 DNSServer dnsServer;
@@ -26,6 +44,27 @@ IPAddress netMsk(255, 255, 255, 0);
 bool useSDCard = false;
 bool storageInitialized = false;
 String storageType = "";
+
+struct DispenseRequest {
+  int medicationId[3]; // medicineID
+  int quantity[3];     // qty (default 1 if not provided)
+  String prescriptionId;
+
+  String toString() const {
+    String result = "DISPENSE:" + prescriptionId;
+    for (int i = 0; i < 3; i++) {
+      if (medicationId[i] > 0) {
+        result += "|M" + String(medicationId[i]) + ":" + String(quantity[i]);
+      }
+    }
+    return result;
+  }
+};
+
+
+
+
+
 
 // Session management
 struct Session {
@@ -55,7 +94,8 @@ std::vector<User> users = {
   {1, "test", "test123", "Test User", "test@example.com", "MD-00001", "General Practice"},
   {2, "admin", "admin123", "Dr. John Smith", "j.smith@hospital.com", "MD-12345", "Internal Medicine"},
   {3, "doctor1", "pass123", "Dr. Sarah Johnson", "s.johnson@hospital.com", "MD-23456", "Cardiology"},
-  {4, "doctor2", "med456", "Dr. Michael Chen", "m.chen@hospital.com", "MD-34567", "Emergency Medicine"}
+  {4, "doctor2", "med456", "Dr. Michael Chen", "m.chen@hospital.com", "MD-34567", "Emergency Medicine"},
+  {5, "Doctor A", "DocA123", "Dr. Alice Brown", "a.brown@hospital.com", "MD-45678", "Pediatrics"}
 };
 
 // Prescription struct for storing submitted prescriptions
@@ -63,7 +103,7 @@ struct Medication {
   String medicationName;
   String strength;
   String dosageForm;
-  int quantity;
+  String frequency;
 };
 
 struct Prescription {
@@ -73,11 +113,6 @@ struct Prescription {
   String ward;
   String bedNumber;
   std::vector<Medication> medications;
-  String route;
-  String frequency;
-  String priority;
-  String indication;
-  String specialInstructions;
   String status;
   String date;
   String prescribingPhysician;
@@ -107,7 +142,6 @@ struct Notification {
   String title;
   String content;
   String type;
-  String priority;
   String time;
   bool read;
   bool actionRequired;
@@ -118,49 +152,104 @@ struct Notification {
 // Notifications linked to specific users
 std::vector<Notification> notifications = {
   // Notifications for Dr. John Smith (admin)
-  {"NOTIF-001", "Stock Alert: Insulin Glargine", "Limited stock remaining. Your prescription RX-2024-002 may experience delays. Alternative formulation available.", "urgent", "high", "30 minutes ago", false, true, "RX-2024-002", "admin"},
-  {"NOTIF-002", "Prescription Approved", "Lisinopril prescription for Sarah Wilson has been approved by pharmacy. Ready for dispensing.", "success", "normal", "2 hours ago", true, false, "RX-2024-001", "admin"},
+  {"NOTIF-001", "Stock Alert: Medicine 5", "Limited stock remaining. Your prescription RX-2024-002 may experience delays. Alternative formulation available.","success",   "30 minutes ago", false, true, "RX-2024-002", "admin"},
+  {"NOTIF-002", "Prescription Approved", "Medicine 2 prescription for Sarah Wilson has been approved by pharmacy. Ready for dispensing.", "success",  "2 hours ago", true, false, "RX-2024-001", "admin"},
   
   // Notifications for Dr. Sarah Johnson (doctor1)
-  {"NOTIF-003", "Patient Update Required", "Warfarin dosage for Lisa Williams requires adjustment based on latest INR results. Please review.", "urgent", "high", "1 hour ago", false, true, "RX-2024-006", "doctor1"},
-  {"NOTIF-004", "Prescription Dispensed", "Atorvastatin for James Anderson has been successfully dispensed. Patient notified for collection.", "success", "normal", "4 hours ago", true, false, "RX-2024-007", "doctor1"},
+  {"NOTIF-003", "Patient Update Required", "Medicine 7 dosage for Lisa Williams requires adjustment based on latest INR results. Please review.",   "warning", "1 hour ago", false, true, "RX-2024-006", "doctor1"},
+  {"NOTIF-004", "Prescription Dispensed", "Medicine 4 for James Anderson has been successfully dispensed. Patient notified for collection.", "success",  "4 hours ago", true, false, "RX-2024-007", "doctor1"},
   
   // Notifications for Dr. Michael Chen (doctor2)
-  {"NOTIF-005", "Emergency Medication Available", "Epinephrine for Emma Thompson is now ready for immediate collection from emergency pharmacy.", "success", "urgent", "15 minutes ago", false, true, "RX-2024-003", "doctor2"},
-  {"NOTIF-006", "Drug Interaction Alert", "Potential interaction detected between prescribed Azithromycin and patient's existing Warfarin therapy for Maria Garcia. Review recommended.", "urgent", "high", "45 minutes ago", false, true, "RX-2024-008", "doctor2"}
+  {"NOTIF-005", "Emergency Medication Available", "Medicine 6 for Emma Thompson is now ready for immediate collection from emergency pharmacy.", "success",  "15 minutes ago", false, true, "RX-2024-003", "doctor2"},
+  {"NOTIF-006", "Drug Interaction Alert", "Potential interaction detected between prescribed Medicine 9 and patient's existing Medicine 7 therapy for Maria Garcia. Review recommended.",   "warning", "45 minutes ago", false, true, "RX-2024-008", "doctor2"}
 };
 
-// Extended prescriptions linked to specific doctors
 std::vector<Prescription> prescriptions = {
-  // Dr. John Smith's prescriptions
-  {"RX-2024-001", "Sarah Wilson", "MRN-78901234", "cardiology", "Ward-A-12", {{"Lisinopril", "10mg", "tablet", 30}}, "oral", "once daily", "routine", "Hypertension management", "Monitor blood pressure weekly", "dispensing", "2024-01-16", "Dr. John Smith", "admin"},
-  {"RX-2024-002", "Michael Rodriguez", "MRN-56789012", "internal", "Ward-B-08", {{"Insulin Glargine", "100IU/ml", "injection", 3}}, "subcutaneous", "once daily", "urgent", "Diabetes mellitus type 1", "Rotate injection sites", "pending", "2024-01-16", "Dr. John Smith", "admin"},
-  {"RX-2024-009", "Robert Chen", "MRN-23456789", "outpatient", "", {{"Metformin", "500mg", "tablet", 60}}, "oral", "twice daily", "routine", "Type 2 diabetes", "Take with meals", "ready", "2024-01-15", "Dr. John Smith", "admin"},
-  
-  // Dr. Sarah Johnson's prescriptions
-  {"RX-2024-006", "Lisa Williams", "MRN-12345678", "cardiology", "Ward-A-25", {{"Warfarin", "5mg", "tablet", 30}}, "oral", "once daily", "routine", "Atrial fibrillation", "Monitor INR weekly", "partially-dispensed", "2024-01-14", "Dr. Sarah Johnson", "doctor1"},
-  {"RX-2024-007", "James Anderson", "MRN-11223344", "internal", "Ward-B-15", {{"Atorvastatin", "20mg", "tablet", 30}}, "oral", "once daily", "routine", "Hypercholesterolemia", "Check liver function in 6 weeks", "dispensed", "2024-01-13", "Dr. Sarah Johnson", "doctor1"},
-  {"RX-2024-010", "Sarah Wilson", "MRN-78901234", "cardiology", "Ward-A-12", {{"Aspirin", "81mg", "tablet", 30}}, "oral", "once daily", "routine", "Cardiovascular prophylaxis", "Take with food", "ready", "2024-01-16", "Dr. Sarah Johnson", "doctor1"},
-  
-  // Dr. Michael Chen's prescriptions
-  {"RX-2024-003", "Emma Thompson", "MRN-34567890", "emergency", "ER-03", {{"Epinephrine", "1mg/ml", "injection", 2}}, "intramuscular", "stat", "stat", "Anaphylactic reaction", "Have second dose available", "ready", "2024-01-16", "Dr. Michael Chen", "doctor2"},
-  {"RX-2024-008", "Maria Garcia", "MRN-55667788", "emergency", "ER-07", {{"Azithromycin", "250mg", "tablet", 6}}, "oral", "once daily", "urgent", "Community-acquired pneumonia", "Complete full course even if feeling better", "dispensing", "2024-01-16", "Dr. Michael Chen", "doctor2"},
-  {"RX-2024-011", "Emma Thompson", "MRN-34567890", "emergency", "ER-03", {{"Prednisolone", "20mg", "tablet", 5}}, "oral", "once daily", "urgent", "Allergic reaction follow-up", "Taper dose as directed", "pending", "2024-01-16", "Dr. Michael Chen", "doctor2"}
+  // ---------------- Test User ----------------
+  {"RX-2024-100", "Maria Garcia", "MRN-55667788", "emergency", "ER-07",
+   {{"Medicine 1","500mg","capsule","tid"}, {"Medicine 8","500mg","tablet","bid"}},
+   "pending",  "2024-01-20", "Test User", "test"},
+  {"RX-2024-101", "Robert Chen", "MRN-23456789", "outpatient", "",
+   {{"Medicine 3","500mg","tablet","tid"}, {"Medicine 2","10mg","tablet","bid"}},
+   "dispensing", "2024-01-21", "Test User", "test"},
+  {"RX-2024-102", "James Anderson", "MRN-11223344", "internal", "Ward-B-15",
+   {{"Medicine 8","500mg","tablet","tid"}},
+   "ready", "2024-01-22", "Test User", "test"},
+
+  // ---------------- Dr. John Smith ----------------
+  {"RX-2024-001", "Sarah Wilson", "MRN-78901234", "cardiology", "Ward-A-12",
+   {{"Medicine 2","10mg","tablet","tid"}},
+   "dispensing", "2024-01-16", "Dr. John Smith", "admin"},
+  {"RX-2024-002", "Michael Rodriguez", "MRN-56789012", "internal", "Ward-B-08",
+   {{"Medicine 5","100IU/ml","injection","bid"}},
+   "pending", "2024-01-16", "Dr. John Smith", "admin"},
+  {"RX-2024-009", "Robert Chen", "MRN-23456789", "outpatient", "",
+   {{"Medicine 3","500mg","tablet","tid"}},
+   "ready", "2024-01-15", "Dr. John Smith", "admin"},
+  // Multi-medication example
+  {"RX-2024-012", "James Anderson", "MRN-11223344", "internal", "Ward-B-15",
+   {{"Medicine 4","20mg","tablet","tid"}, {"Medicine 8","500mg","tablet","tid"}},
+  "pending", "2024-01-18", "Dr. John Smith", "admin"},
+
+  // ---------------- Dr. Sarah Johnson ----------------
+  {"RX-2024-006", "Lisa Williams", "MRN-12345678", "cardiology", "Ward-A-25",
+   {{"Medicine 7","5mg","tablet","tid"}},
+   "partially-dispensed", "2024-01-14", "Dr. Sarah Johnson", "doctor1"},
+  {"RX-2024-007", "James Anderson", "MRN-11223344", "internal", "Ward-B-15",
+   {{"Medicine 4","20mg","tablet","bid"}},
+   "dispensed", "2024-01-13", "Dr. Sarah Johnson", "doctor1"},
+  {"RX-2024-010", "Sarah Wilson", "MRN-78901234", "cardiology", "Ward-A-12",
+   {{"Medicine 8","81mg","tablet","tid"}}, // Aspirin replaced with Medicine 8 from the static list
+   "ready", "2024-01-16", "Dr. Sarah Johnson", "doctor1"},
+
+  // ---------------- Dr. Michael Chen ----------------
+  {"RX-2024-003", "Emma Thompson", "MRN-34567890", "emergency", "ER-03",
+   {{"Medicine 6","1mg/ml","injection","once"}},
+   "ready", "2024-01-16", "Dr. Michael Chen", "doctor2"},
+  {"RX-2024-008", "Maria Garcia", "MRN-55667788", "emergency", "ER-07",
+   {{"Medicine 9","250mg","tablet","once"}},
+    "dispensing", "2024-01-16", "Dr. Michael Chen", "doctor2"},
+  {"RX-2024-011", "Emma Thompson", "MRN-34567890", "emergency", "ER-03",
+   {{"Medicine 9","20mg","tablet","once"}}, // replaced with Medicine 8 to stay inside static 9
+  "pending", "2024-01-16", "Dr. Michael Chen", "doctor2"}
 };
+
+long initial_homing=-1; // to make the direction go counterclockwise
+long maxSpeed = 5000.0; // max speed possible for stepper motor
+long accel = 5000.0; // how fast does the stepper motor moves
+long xInitial_max=12500; // standard steps before slowing down for x axis and prevent collision with the stopper
+// long yRInitial_max=18000; 
+long yLInitial_max=18000; // standard steps before slowing down for y axis and prevent collision with the stopper
+long xMax = xInitial_max; // identified max steps for x axis
+long yMax = yLInitial_max; // identified max steps for y axis
+int row = 0; // variable for the row of a dispenser
+int column = 0; // variable for the column of a dispenser
 
 // Medication master list (1-9)
 const char* medicationList[9] = {
-  "Amoxicillin",
-  "Lisinopril",
-  "Metformin",
-  "Atorvastatin",
-  "Insulin Glargine",
-  "Epinephrine",
-  "Warfarin",
-  "Paracetamol",
-  "Azithromycin"
+  "Medicine 1",
+  "Medicine 2",
+  "Medicine 3",
+  "Medicine 4",
+  "Medicine 5",
+  "Medicine 6",
+  "Medicine 7",
+  "Medicine 8",
+  "Medicine 9"
 };
 
+const char* frequencyList[3] = {
+  "once",
+  "bid",
+  "tid"
+};
+
+int getMedicationFrequency(const String& name) {
+  for (int i = 0; i < 3; ++i) {
+    if (name.equalsIgnoreCase(frequencyList[i])) return i + 1;
+  }
+  return 0;
+}
 int getMedicationIndex(const String& name) {
   for (int i = 0; i < 9; ++i) {
     if (name.equalsIgnoreCase(medicationList[i])) return i + 1;
@@ -247,7 +336,7 @@ String getCurrentUsername(const String& token) {
 bool initStorage() {
   Serial.println("Trying SD Card...");
   int retries = 0;
-  const int maxRetries = 10;
+  const int maxRetries = 100;
   while (retries < maxRetries) {
     if (SD.begin(SD_CS_PIN)) {
       uint8_t cardType = SD.cardType();
@@ -417,22 +506,16 @@ void printPrescriptions() {
     Serial.printf("  Patient: %s (MRN: %s)\n", rx.patientName.c_str(), rx.patientMRN.c_str());
     Serial.printf("  Ward: %s, Bed: %s\n", rx.ward.c_str(), rx.bedNumber.c_str());
     Serial.printf("  Status: %s\n", rx.status.c_str());
-    Serial.printf("  Priority: %s\n", rx.priority.c_str());
     Serial.printf("  Date: %s\n", rx.date.c_str());
     Serial.printf("  Physician: %s (%s)\n", rx.prescribingPhysician.c_str(), rx.prescribingUsername.c_str());
-    Serial.printf("  Route: %s, Frequency: %s\n", rx.route.c_str(), rx.frequency.c_str());
-    Serial.printf("  Indication: %s\n", rx.indication.c_str());
+    
+
     Serial.printf("  Medications (%d):\n", rx.medications.size());
     
     for (size_t i = 0; i < rx.medications.size(); i++) {
       const auto& med = rx.medications[i];
-      Serial.printf("    %d. %s %s (%s) x%d\n", 
-                   (int)i+1, med.medicationName.c_str(), med.strength.c_str(), 
-                   med.dosageForm.c_str(), med.quantity);
-    }
-    
-    if (!rx.specialInstructions.isEmpty()) {
-      Serial.printf("  Special Instructions: %s\n", rx.specialInstructions.c_str());
+      Serial.printf("    %d. %s (%d) %s (%s) %s\n", 
+                   (int)i+1, med.medicationName.c_str(), getMedicationIndex(med.medicationName), med.dosageForm.c_str(), med.frequency.c_str());
     }
     Serial.println();
   }
@@ -468,7 +551,7 @@ void printNotifications() {
     Serial.printf("ID: %s [%s]\n", notif.id.c_str(), notif.read ? "READ" : "UNREAD");
     Serial.printf("  Title: %s\n", notif.title.c_str());
     Serial.printf("  Assigned to: %s\n", notif.assignedToUsername.c_str());
-    Serial.printf("  Type: %s, Priority: %s\n", notif.type.c_str(), notif.priority.c_str());
+    Serial.printf("  Type: %s\n", notif.type.c_str());
     Serial.printf("  Time: %s\n", notif.time.c_str());
     Serial.printf("  Action Required: %s\n", notif.actionRequired ? "YES" : "NO");
     if (!notif.relatedOrderId.isEmpty()) {
@@ -508,7 +591,7 @@ void printNotificationsForUser(String username) {
   for (const auto& notif : userNotifications) {
     Serial.printf("ID: %s [%s]\n", notif.id.c_str(), notif.read ? "READ" : "UNREAD");
     Serial.printf("  Title: %s\n", notif.title.c_str());
-    Serial.printf("  Type: %s, Priority: %s\n", notif.type.c_str(), notif.priority.c_str());
+    Serial.printf("  Type: %s\n", notif.type.c_str());
     Serial.printf("  Time: %s\n", notif.time.c_str());
     Serial.printf("  Action Required: %s\n", notif.actionRequired ? "YES" : "NO");
     if (!notif.relatedOrderId.isEmpty()) {
@@ -607,21 +690,18 @@ void printPrescriptionDetails(String rxId) {
       Serial.printf("Ward: %s\n", rx.ward.c_str());
       Serial.printf("Bed Number: %s\n", rx.bedNumber.c_str());
       Serial.printf("Status: %s\n", rx.status.c_str());
-      Serial.printf("Priority: %s\n", rx.priority.c_str());
       Serial.printf("Date: %s\n", rx.date.c_str());
       Serial.printf("Prescribing Physician: %s (%s)\n", rx.prescribingPhysician.c_str(), rx.prescribingUsername.c_str());
-      Serial.printf("Route: %s\n", rx.route.c_str());
-      Serial.printf("Frequency: %s\n", rx.frequency.c_str());
-      Serial.printf("Indication: %s\n", rx.indication.c_str());
-      Serial.printf("Special Instructions: %s\n", rx.specialInstructions.c_str());
+
+      
       
       Serial.printf("\nMedications (%d):\n", rx.medications.size());
       for (size_t i = 0; i < rx.medications.size(); i++) {
         const auto& med = rx.medications[i];
-        Serial.printf("  %d. Medication: %s\n", (int)i+1, med.medicationName.c_str());
+        Serial.printf("  %d. (%d) Medication: %s\n", (int)i+1, getMedicationIndex(med.medicationName), med.medicationName.c_str());
         Serial.printf("     Strength: %s\n", med.strength.c_str());
         Serial.printf("     Dosage Form: %s\n", med.dosageForm.c_str());
-        Serial.printf("     Quantity: %d\n", med.quantity);
+        Serial.printf("     Frequency: %s\n", med.frequency.c_str());
         Serial.println();
       }
       break;
@@ -833,8 +913,7 @@ void handleSerialCommand(String command) {
   }
   else if (command == "all" || command == "dump") {
     printAllData();
-  }
-  else {
+  } else {
     Serial.println("Unknown command. Type 'help' for available commands.");
   }
   
@@ -842,11 +921,31 @@ void handleSerialCommand(String command) {
   Serial.println();
 }
 
+void SendDispenseRequest(byte setUID[4], int medications[3], int frequency[3]) {
+  String payload = "DISPENSE";
+  // for (int i = 0; i < 4; i++) {
+  //   if (i > 0) payload += ",";
+  //   payload += String(setUID[i], HEX);
+  // }
+  payload += "|";
+  for (int i = 0; i < rx.medications.size(); i++) {
+    if (i > 0) payload += ",";
+    payload += "M"+ String(medications[i]);
+    payload += ":";
+    payload += String(frequency[i]);
+  }
+  comm.send(payload);// Sample : DISPENSE|M1:1,M2:2,M3:3
+}
+
+
 void setup() {
   Serial.begin(115200);
   delay(1000);
   Serial.println("ESP32 Started");
-  
+
+  comm.begin(115200); // RX, TX
+  comm.enableAutoPing(30000); // Auto ping every 30 seconds
+
   // Initialize random seed
   randomSeed(analogRead(0));
 
@@ -855,13 +954,17 @@ void setup() {
   if(!storageInitialized) {
     Serial.println("Failed to initialize any storage. Web server will not serve files.");
   }
+// RFID reader initialization
+//   SPI.begin(HSPI_SCK, HSPI_MISO, HSPI_MOSI, SS_PIN); // Start SPI bus
+//   hspi.begin(HSPI_SCK, HSPI_MISO, HSPI_MOSI, SS_PIN);
+//   mfrc522.PCD_Init();
 
   // Configure AP with static IP
   WiFi.mode(WIFI_AP);
   WiFi.softAPConfig(apIP, apIP, netMsk);
-  WiFi.softAP(AP_ssid);
+  WiFi.softAP(AP_ssid, AP_password);
   Serial.println("WiFi AP Started");
-  WiFi.setHostname("pharmassist");
+  WiFi.setHostname("PharmaAssist");
   Serial.print("AP IP: ");
   Serial.println(WiFi.softAPIP());
 
@@ -870,10 +973,10 @@ void setup() {
   Serial.println("DNS Server started for captive portal");
 
   // mDNS
-  if (!MDNS.begin("pharmassist")) {
+  if (!MDNS.begin("PharmaAssist")) {
     Serial.println("Error starting mDNS");
   } else {
-    Serial.println("mDNS Started: http://pharmassist.local");
+    Serial.println("mDNS Started: http://PharmaAssist.local");
     MDNS.addService("http", "tcp", 80);
   }
 
@@ -895,7 +998,7 @@ void setup() {
     
     // For captive portal, redirect to login page
     if (!request->url().startsWith("/api/")) {
-      String redirectURL = "http://pharmaAssist.com/login.html";
+      String redirectURL = "http://PharmaAssist.com/login.html";
       request->redirect(redirectURL);
     } else {
       request->send(404, "text/plain", "Not Found");
@@ -1017,7 +1120,7 @@ void setup() {
     Serial.printf("[LOG] Received body: %s\n", body.c_str());
     Serial.printf("[DEBUG] Body length: %u, Index: %u, Total: %u\n", (unsigned)len, (unsigned)index, (unsigned)total);
     
-    StaticJsonDocument<200> doc;
+    JsonDocument doc;
     DeserializationError error = deserializeJson(doc, body);
     
     if (error) {
@@ -1027,21 +1130,42 @@ void setup() {
       return;
     }
     
-    String username = doc["email"].as<String>();
+    String type = doc["type"].as<String>(); // e.g., "username" or "email"
+    String username = "";
+    String email = "";
     String password = doc["password"].as<String>();
-    Serial.printf("[DEBUG] Parsed email: %s\n", username.c_str());
-    Serial.printf("[DEBUG] Parsed password: %s\n", password.c_str());
-    
-    // Extract username from email (before @)
-    int atIndex = username.indexOf('@');
-    if (atIndex > 0) {
-      username = username.substring(0, atIndex);
-      Serial.printf("[DEBUG] Username extracted from email: %s\n", username.c_str());
+
+    if (type != "username" && type != "email") {
+      Serial.println("[LOG] Invalid login type");
+      request->send(400, "application/json", "{\"success\":false,\"message\":\"Invalid login type\"}");
+      return;
+    } else {
+      Serial.printf("[LOG] Login type: %s\n", type.c_str());
     }
-    
-    Serial.printf("[LOG] Login attempt - User: %s, Pass: %s\n", username.c_str(), password.c_str());
-    
-    User* user = authenticateUser(username, password);
+
+    User* user = nullptr;
+    if (type == "username") {
+      username = doc["username"].as<String>();
+      Serial.println("[LOG] Processing login by username");
+      Serial.printf("[DEBUG] Parsed username: %s\n", username.c_str());
+      Serial.printf("[DEBUG] Parsed password: %s\n", password.c_str());
+      Serial.printf("[LOG] Login attempt - User: %s, Pass: %s\n", username.c_str(), password.c_str());
+      user = authenticateUser(username, password);
+    } else {
+      email = doc["email"].as<String>();
+      Serial.println("[LOG] Processing login by email");
+      Serial.printf("[DEBUG] Parsed email: %s\n", email.c_str());
+      Serial.printf("[DEBUG] Parsed password: %s\n", password.c_str());
+      Serial.printf("[LOG] Login attempt - Email: %s, Pass: %s\n", email.c_str(), password.c_str());
+      // Find user by email
+      for (auto& u : users) {
+        if (u.email.equalsIgnoreCase(email) && u.password == password) {
+          user = &u;
+          username = u.username;
+          break;
+        }
+      }
+    }
     if (user != nullptr) {
       Serial.printf("[LOG] Authentication successful for %s\n", user->fullName.c_str());
       Serial.printf("[DEBUG] User struct: username=%s, email=%s, fullName=%s\n", user->username.c_str(), user->email.c_str(), user->fullName.c_str());
@@ -1058,7 +1182,7 @@ void setup() {
       activeSessions[sessionToken] = newSession;
       
       // Send success response with session info
-      StaticJsonDocument<300> response;
+      JsonDocument response;
       response["success"] = true;
       response["message"] = "Authentication successful";
       response["session_token"] = sessionToken;
@@ -1092,7 +1216,7 @@ void setup() {
       Serial.println("[LOG] Session valid");
       auto it = activeSessions.find(token);
       if (it != activeSessions.end()) {
-        StaticJsonDocument<200> response;
+        JsonDocument response;
         response["valid"] = true;
         response["username"] = it->second.username;
         response["fullName"] = it->second.fullName;
@@ -1143,7 +1267,7 @@ void setup() {
     auto it = activeSessions.find(token);
     if (it != activeSessions.end()) {
       Serial.printf("[LOG] Session info for user: %s\n", it->second.fullName.c_str());
-      StaticJsonDocument<300> response;
+      JsonDocument response;
       response["username"] = it->second.username;
       response["fullName"] = it->second.fullName;
       response["sessionAge"] = (millis() - it->second.createdAt) / 1000; // in seconds
@@ -1176,57 +1300,69 @@ void setup() {
       request->send(401, "application/json", "{\"success\":false,\"message\":\"Unauthorized\"}");
       return;
     }
-  }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
-    static String bodyBuffer;
-    if (index == 0) bodyBuffer = "";
-    bodyBuffer += String((char*)data).substring(0, len);
-    if (index + len == total) {
-      Serial.println("[LOG] POST /api/prescription (body received, final chunk)");
-      Serial.printf("[LOG] Received prescription body: %s\n", bodyBuffer.c_str());
-      
-      String token = getSessionToken(request);
-      String currentUsername = getCurrentUsername(token);
-      
-      StaticJsonDocument<1024> doc;
-      DeserializationError error = deserializeJson(doc, bodyBuffer);
-      if (error) {
-        Serial.println("[LOG] JSON parsing failed for prescription");
-        request->send(400, "application/json", "{\"success\":false,\"message\":\"Invalid JSON\"}");
-        return;
-      }
-      
-      Prescription rx;
-      rx.id = doc["id"].as<String>();
-      rx.patientName = doc["patientName"].as<String>();
-      rx.patientMRN = doc["patientMRN"].as<String>();
-      rx.ward = doc["ward"].as<String>();
-      rx.bedNumber = doc["bedNumber"].as<String>();
-      rx.route = doc["route"].as<String>();
-      rx.frequency = doc["frequency"].as<String>();
-      rx.priority = doc["priority"].as<String>();
-      rx.indication = doc["indication"].as<String>();
-      rx.specialInstructions = doc["specialInstructions"].as<String>();
-      rx.status = doc["status"].as<String>();
-      rx.date = doc["date"].as<String>();
-      rx.prescribingPhysician = doc["prescribingPhysician"].as<String>();
-      rx.prescribingUsername = currentUsername; // Link to current user
-      
-      // Parse medications array
-      if (doc["medications"].is<JsonArray>()) {
-        for (JsonObject med : doc["medications"].as<JsonArray>()) {
-          Medication m;
-          m.medicationName = med["medicationName"].as<String>();
-          m.strength = med["strength"].as<String>();
-          m.dosageForm = med["dosageForm"].as<String>();
-          m.quantity = med["quantity"] | 0;
-          rx.medications.push_back(m);
-        }
-      }
-      prescriptions.push_back(rx);
-      Serial.printf("[LOG] Prescription saved by %s. Total prescriptions: %d\n", currentUsername.c_str(), (int)prescriptions.size());
-      request->send(200, "application/json", "{\"success\":true,\"message\":\"Prescription received and saved.\"}");
+}, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
+  static String bodyBuffer;
+  if (index == 0) bodyBuffer = "";
+  bodyBuffer += String((char*)data).substring(0, len);
+  if (index + len == total) {
+    Serial.println("[LOG] POST /api/prescription (body received, final chunk)");
+    Serial.printf("[LOG] Received prescription body: %s\n", bodyBuffer.c_str());
+
+    String token = getSessionToken(request);
+    String currentUsername = getCurrentUsername(token);
+
+    JsonDocument doc;
+    DeserializationError error = deserializeJson(doc, bodyBuffer);
+    if (error) {
+      Serial.println("[LOG] JSON parsing failed for prescription");
+      request->send(400, "application/json", "{\"success\":false,\"message\":\"Invalid JSON\"}");
+      return;
     }
-  });
+
+    Prescription rx;
+    rx.id = doc["id"] | "";
+    rx.patientName = doc["patientName"] | "";
+    rx.patientMRN = doc["patientMRN"] | "";
+    rx.ward = doc["ward"] | "";
+    rx.bedNumber = doc["bedNumber"] | "";
+    rx.status = doc["status"] | "pending";
+    rx.date = doc["date"] | "";
+    rx.prescribingPhysician = doc["prescribingPhysician"] | "";
+    rx.prescribingUsername = currentUsername;
+
+    // Parse medications array (frontend format)
+    if (doc["medications"].is<JsonArray>()) {
+      JsonArray medsArr = doc["medications"].as<JsonArray>();
+      for (JsonVariant v : medsArr) {
+        JsonObject med = v.as<JsonObject>();
+        Medication m;
+        m.medicationName = med["medicationName"] | "";
+        m.strength = med["strength"] | "";
+        m.dosageForm = med["dosageForm"] | "";
+        m.frequency = med["frequency"] | "";
+        rx.medications.push_back(m);
+      }
+    }
+
+    prescriptions.push_back(rx);
+    Serial.printf("[LOG] Prescription saved by %s. Total prescriptions: %d\n", currentUsername.c_str(), (int)prescriptions.size());
+
+    // Dispense logic (if needed)
+    int medications[rx.medications.size()];
+    int frequency[rx.medications.size()];
+    byte setUID[4] = {0x06, 0x7F, 0xC0, 0x04};
+    for (size_t i = 0; i < rx.medications.size(); i++) {
+      medications[i] = getMedicationIndex(rx.medications[i].medicationName);
+      frequency[i] = getMedicationFrequency(rx.medications[i].frequency);
+      Serial.printf("Medication %d: %s, Frequency: %d\n", (int)i+1, rx.medications[i].medicationName.c_str(), frequency[i]);
+    }
+    Serial.println("[LOG] Demo-dispensing medications for Doctor A");
+    SendDispenseRequest(setUID, medications, frequency);
+    
+
+    request->send(200, "application/json", "{\"success\":true,\"message\":\"Prescription received and saved.\"}");
+  }
+});
 
   // Logging endpoint: POST /api/log
   webServer.on("/api/log", HTTP_POST, [](AsyncWebServerRequest *request) {
@@ -1234,7 +1370,7 @@ void setup() {
   }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
     Serial.println("[LOG] POST /api/log (body received)");
     String body = String((char*)data).substring(0, len);
-    StaticJsonDocument<512> doc;
+    JsonDocument doc;
     DeserializationError error = deserializeJson(doc, body);
     if (error) {
       Serial.println("[LOG] /api/log: Invalid JSON");
@@ -1252,7 +1388,7 @@ void setup() {
     // No headers to process
   }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
     String body = String((char*)data).substring(0, len);
-    StaticJsonDocument<256> doc;
+    JsonDocument doc;
     DeserializationError error = deserializeJson(doc, body);
     if (error) {
       request->send(400, "application/json", "{\"success\":false,\"message\":\"Invalid JSON\"}");
@@ -1299,7 +1435,7 @@ void setup() {
     newSession.lastAccessed = millis();
     activeSessions[sessionToken] = newSession;
 
-    StaticJsonDocument<256> response;
+    JsonDocument response;
     response["success"] = true;
     response["message"] = "Registration successful";
     response["session_token"] = sessionToken;
@@ -1325,23 +1461,18 @@ void setup() {
     
     String currentUsername = getCurrentUsername(token);
     
-    StaticJsonDocument<4096> doc;
-    JsonArray arr = doc.createNestedArray("data");
+    JsonDocument doc;
+    JsonArray arr = doc["data"].to<JsonArray>();
     
     // Only return prescriptions for the current user
     for (const auto& rx : prescriptions) {
       if (rx.prescribingUsername == currentUsername) {
-        JsonObject o = arr.createNestedObject();
+        JsonObject o = arr.add<JsonObject>();
         o["id"] = rx.id;
         o["patientName"] = rx.patientName;
         o["patientMRN"] = rx.patientMRN;
         o["ward"] = rx.ward;
         o["bedNumber"] = rx.bedNumber;
-        o["route"] = rx.route;
-        o["frequency"] = rx.frequency;
-        o["priority"] = rx.priority;
-        o["indication"] = rx.indication;
-        o["specialInstructions"] = rx.specialInstructions;
         o["status"] = rx.status;
         o["date"] = rx.date;
         o["prescribingPhysician"] = rx.prescribingPhysician;
@@ -1350,7 +1481,7 @@ void setup() {
           o["medicationName"] = rx.medications[0].medicationName;
           o["strength"] = rx.medications[0].strength;
           o["dosageForm"] = rx.medications[0].dosageForm;
-          o["quantity"] = rx.medications[0].quantity;
+          o["frequency"] = rx.medications[0].frequency;
         }
       }
     }
@@ -1370,18 +1501,17 @@ void setup() {
     
     String currentUsername = getCurrentUsername(token);
     
-    StaticJsonDocument<4096> doc;
-    JsonArray arr = doc.createNestedArray("data");
+    JsonDocument doc;
+    JsonArray arr = doc["data"].to<JsonArray>();
     
     // Only return notifications for the current user
     for (const auto& n : notifications) {
       if (n.assignedToUsername == currentUsername) {
-        JsonObject o = arr.createNestedObject();
+        JsonObject o = arr.add<JsonObject>();
         o["id"] = n.id;
         o["title"] = n.title;
         o["content"] = n.content;
         o["type"] = n.type;
-        o["priority"] = n.priority;
         o["time"] = n.time;
         o["read"] = n.read;
         o["actionRequired"] = n.actionRequired;
@@ -1440,10 +1570,10 @@ void setup() {
       return;
     }
     
-    StaticJsonDocument<2048> doc;
-    JsonArray arr = doc.createNestedArray("data");
+    JsonDocument doc;
+    JsonArray arr = doc["data"].to<JsonArray>();
     for (const auto& p : patients) {
-      JsonObject o = arr.createNestedObject();
+      JsonObject o = arr.add<JsonObject>();
       o["name"] = p.name;
       o["mrn"] = p.mrn;
       o["ward"] = p.ward;
@@ -1564,9 +1694,19 @@ void loop() {
         handleSerialCommand(serialBuffer);
         serialBuffer = "";
       }
-    } else if (isPrintable(c)) {
+    } else if (isAscii(c)) {
       serialBuffer += c;
     }
+  }
+
+  comm.update();
+  comm.handleAutoPing();
+  
+  if (comm.available()) {
+    String msg = comm.read();
+    Serial.print("Received via Comm: ");
+    Serial.println(msg);
+    // Process incoming messages as needed
   }
 
   delay(10);

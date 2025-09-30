@@ -152,20 +152,27 @@
                                                     <label class="form-label" for="medicationName">Medication Name *</label>
                                                     <select id="medicationName" name="medicationName" class="form-input" required>
                                                       <option value="">Select Medication</option>
-                                                      <option value="Amoxicillin">Amoxicillin</option>
-                                                      <option value="Lisinopril">Lisinopril</option>
-                                                      <option value="Metformin">Metformin</option>
-                                                      <option value="Atorvastatin">Atorvastatin</option>
-                                                      <option value="Insulin Glargine">Insulin Glargine</option>
-                                                      <option value="Epinephrine">Epinephrine</option>
-                                                      <option value="Warfarin">Warfarin</option>
-                                                      <option value="Paracetamol">Paracetamol</option>
-                                                      <option value="Azithromycin">Azithromycin</option>
+                                                      <option value="Medicine 1">Medicine 1</option>
+                                                      <option value="Medicine 2">Medicine 2</option>
+                                                      <option value="Medicine 3">Medicine 3</option>
+                                                      <option value="Medicine 4">Medicine 4</option>
+                                                      <option value="Medicine 5">Medicine 5</option>
+                                                      <option value="Medicine 6">Medicine 6</option>
+                                                      <option value="Medicine 7">Medicine 7</option>
+                                                      <option value="Medicine 8">Medicine 8</option>
+                                                      <option value="Medicine 9">Medicine 9</option>
                                                     </select>
                                                 </div>
                                                 <div class="form-col">
                                                     <label class="form-label" for="strength">Strength/Concentration *</label>
-                                                    <input type="text" id="strength" name="strength" class="form-input" placeholder="e.g., 500mg, 10mg/ml" required>
+                                                    <select id="strength" name="strength" class="form-input" required>
+                                                        <option value="">Select strength</option>
+                                                        <option value="500mg">500mg</option>
+                                                        <option value="250mg">250mg</option>
+                                                        <option value="100mg">100mg</option>
+                                                        <option value="10mg">10mg</option>
+                                                        <option value="5mg">5mg</option>
+                                                    </select>
                                                 </div>
                                             </div>
                                             <div class="form-row">
@@ -175,83 +182,22 @@
                                                         <option value="">Select form</option>
                                                         <option value="tablet">Tablet</option>
                                                         <option value="capsule">Capsule</option>
-                                                        <option value="syrup">Syrup</option>
-                                                        <option value="injection">Injection</option>
-                                                        <option value="cream">Topical Cream</option>
-                                                        <option value="drops">Drops</option>
-                                                        <option value="inhaler">Inhaler</option>
-                                                        <option value="patch">Patch</option>
                                                     </select>
                                                 </div>
                                                 <div class="form-col">
-                                                    <label class="form-label" for="quantity">Quantity Required *</label>
-                                                    <input type="number" id="quantity" name="quantity" class="form-input" placeholder="Number of units" min="1" required>
+                                                    <label class="form-label" for="frequency">Dosing Frequency *</label>
+                                                    <select id="frequency" name="frequency" class="form-input" required>
+                                                        <option value="">Select frequency</option>
+                                                        <option value="once">Once daily (QD)</option>
+                                                        <option value="bid">Twice daily (BID)</option>
+                                                        <option value="tid">Three times daily (TID)</option>
+                                                    </select>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 <button type="button" id="addMedicationBtn" class="btn btn-secondary" style="margin-top: 1rem;">Add Medication</button>
-
-                                <!-- Administration Details -->
-                                <div class="form-section">
-                                    <h4 class="section-title">Administration Instructions</h4>
-                                    <div class="form-row">
-                                        <div class="form-col">
-                                            <label class="form-label" for="route">Route of Administration</label>
-                                            <select id="route" class="form-input">
-                                                <option value="">Select route</option>
-                                                <option value="oral">Oral (PO)</option>
-                                                <option value="intravenous">Intravenous (IV)</option>
-                                                <option value="intramuscular">Intramuscular (IM)</option>
-                                                <option value="subcutaneous">Subcutaneous (SC)</option>
-                                                <option value="topical">Topical</option>
-                                                <option value="inhalation">Inhalation</option>
-                                                <option value="rectal">Rectal</option>
-                                                <option value="sublingual">Sublingual</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-col">
-                                            <label class="form-label" for="frequency">Dosing Frequency</label>
-                                            <select id="frequency" class="form-input">
-                                                <option value="">Select frequency</option>
-                                                <option value="once">Once daily (QD)</option>
-                                                <option value="bid">Twice daily (BID)</option>
-                                                <option value="tid">Three times daily (TID)</option>
-                                                <option value="qid">Four times daily (QID)</option>
-                                                <option value="q6h">Every 6 hours (Q6H)</option>
-                                                <option value="q8h">Every 8 hours (Q8H)</option>
-                                                <option value="prn">As needed (PRN)</option>
-                                                <option value="stat">STAT (Immediate)</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Priority and Instructions -->
-                                <div class="form-section">
-                                    <h4 class="section-title">Priority & Special Instructions</h4>
-                                    <div class="form-row">
-                                        <div class="form-col">
-                                            <label class="form-label" for="priority">Priority Level *</label>
-                                            <select id="priority" class="form-input" required>
-                                                <option value="">Select priority</option>
-                                                <option value="routine">Routine</option>
-                                                <option value="urgent">Urgent</option>
-                                                <option value="stat">STAT (Emergency)</option>
-                                                <option value="asap">ASAP</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-col">
-                                            <label class="form-label" for="indication">Clinical Indication</label>
-                                            <input type="text" id="indication" class="form-input" placeholder="Diagnosis or treatment indication">
-                                        </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label" for="specialInstructions">Special Instructions for Pharmacy</label>
-                                        <textarea id="specialInstructions" class="form-input" rows="3" placeholder="Any special handling instructions, allergies, contraindications, or pharmacy notes..."></textarea>
-                                    </div>
-                                </div>
 
                                 <div class="form-actions">
                                     <button type="submit" class="btn btn-primary">Submit Prescription Order</button>
