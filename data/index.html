@@ -7,6 +7,9 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body data-theme="dark">
+    <div id="debugModeIndicator" style="display:none;position:fixed;top:0;left:0;width:100%;background:#f59e0b;color:#222;text-align:center;padding:6px 0;z-index:2000;font-weight:bold;">
+        DEBUG MODE ENABLED - API calls are simulated
+    </div>
     <div class="container">
         <!-- Dashboard -->
         <div id="dashboard">
@@ -329,5 +332,11 @@
     </div>
 
     <script src="script.js"></script>
+    <script>
+        // Show debug indicator if debugMode is set
+        if (window.debugMode) {
+            document.getElementById('debugModeIndicator').style.display = 'block';
+        }
+    </script>
 </body>
 </html>

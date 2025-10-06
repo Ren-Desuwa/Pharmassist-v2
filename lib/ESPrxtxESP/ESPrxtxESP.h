@@ -10,6 +10,7 @@ private:
     String buffer;
     bool dataAvailable;
     
+    
 public:
     ESPReader(HardwareSerial* hwSerial) {
         serial = hwSerial;
@@ -116,6 +117,8 @@ private:
     unsigned long lastPingTime;
     unsigned long pingInterval;
     bool autoPingEnabled;
+    String charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    int x = 0;
     
 public:
     ESPrxtxESP(HardwareSerial* hwSerial) {
@@ -202,9 +205,14 @@ public:
     
     // Ping/Pong/Ack functionality
     void sendPing() {
-        send("PING");
+        String pingMessage = "PING ";
+        pingMessage += charset.charAt(x);
+        pingMessage += String(x);
+        x++;
+        if (x >= charset.length()) x = 0;
+        send(pingMessage);
     }
-    
+    `
     void sendPong() {
         send("PONG");
     }

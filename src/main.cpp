@@ -10,22 +10,13 @@
 #include <vector>
 #include "ESPrxtxESP.h"
 
+
 #define SD_CS_PIN 5   // SD Card Chip Select pin
 // VSPI
 // MISO -> GPIO19
 // MOSI -> GPIO23
 // SCK -> GPIO18
 // CS  -> GPIO5
-
-// RF ID READER PINS
-// #define SS_PIN   15   // SDA
-// #define RST_PIN  27   // RST
-// #define HSPI_SCK 14
-// #define HSPI_MISO 12
-// #define HSPI_MOSI 13
-
-// SPIClass hspi(HSPI);
-// MFRC522 mfrc522(SS_PIN, RST_PIN);
 
 
 const char* AP_ssid = "PharmaAssist";
@@ -213,17 +204,6 @@ std::vector<Prescription> prescriptions = {
    {{"Medicine 9","20mg","tablet","once"}}, // replaced with Medicine 8 to stay inside static 9
   "pending", "2024-01-16", "Dr. Michael Chen", "doctor2"}
 };
-
-long initial_homing=-1; // to make the direction go counterclockwise
-long maxSpeed = 5000.0; // max speed possible for stepper motor
-long accel = 5000.0; // how fast does the stepper motor moves
-long xInitial_max=12500; // standard steps before slowing down for x axis and prevent collision with the stopper
-// long yRInitial_max=18000; 
-long yLInitial_max=18000; // standard steps before slowing down for y axis and prevent collision with the stopper
-long xMax = xInitial_max; // identified max steps for x axis
-long yMax = yLInitial_max; // identified max steps for y axis
-int row = 0; // variable for the row of a dispenser
-int column = 0; // variable for the column of a dispenser
 
 // Medication master list (1-9)
 const char* medicationList[9] = {
@@ -913,7 +893,11 @@ void handleSerialCommand(String command) {
   }
   else if (command == "all" || command == "dump") {
     printAllData();
-  } else {
+  } else if (command.startsWith("send")) {
+    comm.send(command.substring(5));
+    Serial.println("Sent command via serial bridge: " + command.substring(5));
+  }
+  else {
     Serial.println("Unknown command. Type 'help' for available commands.");
   }
   
@@ -928,13 +912,14 @@ void SendDispenseRequest(byte setUID[4], int medications[3], int frequency[3]) {
   //   payload += String(setUID[i], HEX);
   // }
   payload += "|";
-  for (int i = 0; i < rx.medications.size(); i++) {
+  for (int i = 0; i < (sizeof(medications) / sizeof(medications[0])); i++) {
     if (i > 0) payload += ",";
     payload += "M"+ String(medications[i]);
     payload += ":";
     payload += String(frequency[i]);
   }
   comm.send(payload);// Sample : DISPENSE|M1:1,M2:2,M3:3
+  Serial.println("Dispense request sent: " + payload);
 }
 
 
@@ -944,7 +929,7 @@ void setup() {
   Serial.println("ESP32 Started");
 
   comm.begin(115200); // RX, TX
-  comm.enableAutoPing(30000); // Auto ping every 30 seconds
+  comm.enableAutoPing(3000); // Auto ping every 30 seconds
 
   // Initialize random seed
   randomSeed(analogRead(0));
@@ -1190,6 +1175,7 @@ void setup() {
       response["user"]["email"] = user->email;
       response["user"]["license"] = user->license;
       response["user"]["department"] = user->department;
+      response["user"]["type"] = user->role;
       
       String responseStr;
       serializeJson(response, responseStr);
@@ -1626,6 +1612,10 @@ void setup() {
     request->send(200, "application/json", "{\"success\":true}");
   });
 
+  webServer.on("/api/status", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(200, "application/json", "{\"status\":\"ok\"}");
+  });
+
   webServer.begin();
   Serial.println("Web Server started on port 80");
   Serial.printf("Using %s for file storage\n", storageType.c_str());
@@ -1687,17 +1677,31 @@ void loop() {
 
   // Serial command parser
   static String serialBuffer;
+
   while (Serial.available()) {
     char c = Serial.read();
+
     if (c == '\n' || c == '\r') {
       if (serialBuffer.length() > 0) {
         handleSerialCommand(serialBuffer);
         serialBuffer = "";
       }
-    } else if (isAscii(c)) {
+      Serial.println(); // move to new line after command
+    } 
+    else if (c == 8 || c == 127) {  
+      // Handle Backspace/Delete
+      if (serialBuffer.length() > 0) {
+        serialBuffer.remove(serialBuffer.length() - 1);  // remove last char
+        Serial.print("\b \b"); // backspace, overwrite with space, backspace again
+      }
+    }
+    else if (isPrintable(c)) {
+      // Normal character
       serialBuffer += c;
+      Serial.print(c); // Echo
     }
   }
+
 
   comm.update();
   comm.handleAutoPing();

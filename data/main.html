@@ -1,0 +1,3137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PharmAssist - Physician Portal</title>
+    <style>
+        /* PharmAssist Physician Portal - Combined Enhanced Styles */
+
+/* ===== CSS CUSTOM PROPERTIES ===== */
+:root {
+  /* Spacing Scale */
+  --Size-1: 0.25rem;    /* 4px */
+  --Size-2: 0.5rem;     /* 8px */
+  --Size-3: 0.75rem;    /* 12px */
+  --Size-4: 1rem;       /* 16px */
+  --Size-5: 1.25rem;    /* 20px */
+  --Size-6: 1.5rem;     /* 24px */
+  --Size-7: 1.75rem;    /* 28px */
+  --Size-8: 2rem;       /* 32px */
+  --Size-9: 2.25rem;    /* 36px */
+  --Size-10: 2.5rem;    /* 40px */
+  --Size-12: 3rem;      /* 48px */
+  --Size-16: 4rem;      /* 64px */
+  --Size-20: 5rem;      /* 80px */
+
+  /* Typography */
+  --font-family-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  --font-family-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  
+  /* Border Radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  
+  /* Transitions */
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Z-index Scale */
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+  
+  /* Layout Constants */
+  --header-height: 4rem;
+  --sidebar-width: 280px;
+  --mobile-header-height: 3rem;
+}
+
+/* Dark Theme (default) */
+[data-theme="dark"] {
+  --bg-primary: #0f1419;
+  --bg-secondary: #1a1f29;
+  --bg-tertiary: #24303f;
+  --card-bg: #1e2835;
+  --surface-elevated: #2a3441;
+  
+  --text-primary: #ffffff;
+  --text-secondary: #b8c5d1;
+  --text-muted: #8b9cb8;
+  --text-disabled: #5d6b7a;
+  
+  --border-color: #34404d;
+  --border-light: #2a3441;
+  --border-strong: #4a5663;
+  
+  --accent-color: #3b82f6;
+  --accent-hover: #2563eb;
+  --accent-light: rgba(59, 130, 246, 0.1);
+  
+  --success-color: #10b981;
+  --success-light: rgba(16, 185, 129, 0.1);
+  --warning-color: #f59e0b;
+  --warning-light: rgba(245, 158, 11, 0.1);
+  --danger-color: #ef4444;
+  --danger-light: rgba(239, 68, 68, 0.1);
+  --info-color: #06b6d4;
+  --info-light: rgba(6, 182, 212, 0.1);
+  
+  --shadow-color: rgba(0, 0, 0, 0.3);
+  --shadow-strong: rgba(0, 0, 0, 0.5);
+  --shadow-light: rgba(0, 0, 0, 0.1);
+  --overlay-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Light Theme */
+[data-theme="light"] {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --card-bg: #ffffff;
+  --surface-elevated: #ffffff;
+  
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --text-disabled: #94a3b8;
+  
+  --border-color: #e2e8f0;
+  --border-light: #f1f5f9;
+  --border-strong: #cbd5e1;
+  
+  --accent-color: #3b82f6;
+  --accent-hover: #2563eb;
+  --accent-light: rgba(59, 130, 246, 0.1);
+  
+  --success-color: #059669;
+  --success-light: rgba(5, 150, 105, 0.1);
+  --warning-color: #d97706;
+  --warning-light: rgba(217, 119, 6, 0.1);
+  --danger-color: #dc2626;
+  --danger-light: rgba(220, 38, 38, 0.1);
+  --info-color: #0891b2;
+  --info-light: rgba(8, 145, 178, 0.1);
+  
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --shadow-strong: rgba(0, 0, 0, 0.15);
+  --shadow-light: rgba(0, 0, 0, 0.05);
+  --overlay-color: rgba(0, 0, 0, 0.3);
+}
+
+/* ===== RESET & BASE STYLES ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-family-primary);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: all var(--transition-normal);
+}
+
+/* ===== UTILITY CLASSES ===== */
+.hidden { display: none !important; }
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.desktop-only { display: block; }
+.mobile-only { display: none; }
+
+@media (max-width: 768px) {
+  .desktop-only { display: none !important; }
+  .mobile-only { display: block !important; }
+  .mobile-header {
+    display: flex !important;
+  }
+}
+
+/* ===== CONTAINER & LAYOUT ===== */
+.container {
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-layout {
+  display: flex;
+  flex: 1;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+  min-height: calc(100vh - var(--header-height));
+}
+
+@media (max-width: 768px) {
+  .dashboard-layout {
+    min-height: calc(100vh - var(--mobile-header-height));
+  }
+}
+
+/* ===== ENHANCED HEADER ===== */
+.header {
+  background-color: var(--card-bg);
+  border-bottom: 1px solid var(--border-color);
+  padding: 0 var(--Size-6);
+  height: var(--header-height);
+  display: flex;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  box-shadow: 0 4px 20px var(--shadow-light);
+  backdrop-filter: blur(10px);
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  height: 100%;
+  gap: var(--Size-4);
+}
+
+.mobile-menu-btn {
+  display: none;
+}
+
+.notification-text {
+  display: inline;
+}
+
+@media (max-width: 768px) {
+  .header {
+    height: var(--mobile-header-height);
+    padding: 0 var(--Size-4);
+  }
+  .header-content {
+    gap: var(--Size-2);
+  }
+  .mobile-menu-btn {
+    display: inline-flex;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-size: var(--Size-5);
+    cursor: pointer;
+    padding: var(--Size-2);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+    align-items: center;
+    justify-content: center;
+  }
+  .logo {
+    font-size: var(--Size-4);
+    gap: var(--Size-2);
+  }
+  .user-info {
+    gap: var(--Size-2);
+  }
+  .notification-text {
+    display: none;
+  }
+  .user-greeting {
+    display: none;
+  }
+  .btn.btn-secondary {
+    display: none;
+  }
+}
+
+/* ===== ENHANCED LOGO ===== */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: var(--Size-3);
+  font-weight: 700;
+  font-size: var(--Size-5);
+}
+
+.logo-icon {
+  font-size: var(--Size-6);
+  color: var(--accent-color);
+}
+
+.logo-text {
+  background: linear-gradient(135deg, var(--accent-color), #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ===== USER INFO & ACTIONS ===== */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: var(--Size-4);
+}
+
+.user-greeting {
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: var(--Size-4);
+}
+
+.mobile-user-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--Size-2);
+}
+
+/* ===== ENHANCED NOTIFICATIONS ===== */
+.notification-center {
+  position: relative;
+}
+
+.notification-btn {
+  position: relative;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: var(--Size-2) var(--Size-4);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all var(--transition-normal);
+  display: flex;
+  align-items: center;
+  gap: var(--Size-2);
+}
+
+.notification-btn:hover {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.notification-badge {
+  position: absolute;
+  top: -var(--Size-1);
+  right: -var(--Size-1);
+  background-color: var(--danger-color);
+  color: white;
+  border-radius: 50%;
+  width: var(--Size-5);
+  height: var(--Size-5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  min-width: var(--Size-5);
+  animation: pulse 2s infinite;
+}
+
+/* ===== MOBILE MENU BUTTON ===== */
+.mobile-menu-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: var(--Size-5);
+  cursor: pointer;
+  padding: var(--Size-2);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.mobile-menu-btn:hover {
+  background-color: var(--bg-tertiary);
+}
+
+/* ===== ENHANCED SIDEBAR ===== */
+.sidebar {
+  width: var(--sidebar-width);
+  background-color: var(--card-bg);
+  border-right: 1px solid var(--border-color);
+  height: calc(100vh - var(--header-height));
+  overflow-y: auto;
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 1px 0 3px var(--shadow-color);
+  transition: transform var(--transition-normal);
+}
+
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: var(--bg-tertiary);
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-color);
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 320px;
+    z-index: var(--z-modal);
+    transform: translateX(-100%);
+    transition: transform var(--transition-normal);
+    box-shadow: 4px 0 20px var(--shadow-strong);
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+}
+
+.sidebar-header {
+  padding: var(--Size-6);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: var(--Size-3);
+}
+
+.user-avatar {
+  width: var(--Size-8);
+  height: var(--Size-8);
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-color), var(--info-color));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--Size-5);
+  font-weight: 700;
+  color: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: var(--Size-4);
+}
+
+.user-role {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  margin-top: var(--Size-1);
+}
+
+.sidebar-close {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: var(--Size-5);
+  cursor: pointer;
+  padding: var(--Size-2);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.sidebar-close:hover {
+  background-color: var(--danger-light);
+  color: var(--danger-color);
+}
+
+/* ===== ENHANCED NAVIGATION MENU ===== */
+.nav-menu {
+  list-style: none;
+  padding: var(--Size-4);
+  flex: 1;
+}
+
+.nav-item {
+  margin-bottom: var(--Size-2);
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: var(--Size-3);
+  padding: var(--Size-3) var(--Size-4);
+  color: var(--text-secondary);
+  text-decoration: none;
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-normal);
+  font-weight: 500;
+  position: relative;
+}
+
+.nav-link:hover {
+  background-color: var(--accent-light);
+  color: var(--accent-color);
+  transform: translateX(4px);
+}
+
+.nav-link.active {
+  background-color: var(--accent-color);
+  color: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  transform: translateX(4px);
+}
+
+.nav-link.active::before {
+  content: '';
+  position: absolute;
+  left: -var(--Size-4);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 60%;
+  background: var(--accent-color);
+  border-radius: 2px;
+}
+
+.nav-icon {
+  font-size: var(--Size-5);
+  min-width: var(--Size-5);
+  text-align: center;
+  transition: transform var(--transition-fast);
+}
+
+.nav-link:hover .nav-icon {
+  transform: scale(1.1);
+}
+
+.nav-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+  flex: 1;
+}
+
+.nav-badge {
+  background: var(--danger-color);
+  color: white;
+  font-size: 0.75rem;
+  padding: var(--Size-1) var(--Size-2);
+  border-radius: var(--Size-4);
+  min-width: var(--Size-4);
+  text-align: center;
+}
+
+.sidebar-footer {
+  padding: var(--Size-4);
+  border-top: 1px solid var(--border-color);
+  margin-top: auto;
+}
+
+/* ===== MOBILE OVERLAY ===== */
+.mobile-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--overlay-color);
+  z-index: calc(var(--z-modal) - 1);
+  opacity: 0;
+  visibility: hidden;
+  transition: all var(--transition-normal);
+  backdrop-filter: blur(2px);
+}
+
+.mobile-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ===== ENHANCED MAIN CONTENT ===== */
+.main-content {
+  flex: 1;
+  padding: var(--Size-6);
+  background-color: var(--bg-secondary);
+  min-height: calc(100vh - var(--header-height));
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.main-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.main-content::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+.main-content::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+.main-content::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-color);
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding: var(--Size-4);
+    min-height: calc(100vh - var(--mobile-header-height));
+  }
+}
+
+/* ===== ENHANCED PAGE STRUCTURE ===== */
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: var(--Size-8);
+  padding-bottom: var(--Size-4);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.page-title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--Size-2);
+  line-height: 1.2;
+  background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-color) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.page-subtitle {
+  color: var(--text-muted);
+  font-size: var(--Size-4);
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.page-actions {
+  display: flex;
+  gap: var(--Size-3);
+  align-items: center;
+  margin-top: var(--Size-4);
+}
+
+@media (max-width: 768px) {
+  .page-title {
+    font-size: 1.5rem;
+  }
+  
+  .page-subtitle {
+    font-size: 0.875rem;
+  }
+}
+
+/* ===== ENHANCED CARDS ===== */
+.card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 4px 20px var(--shadow-light);
+  margin-bottom: var(--Size-6);
+  overflow: hidden;
+  transition: all var(--transition-normal);
+  position: relative;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent-color), var(--info-color));
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px var(--shadow-color);
+}
+
+.card:hover::before {
+  opacity: 1;
+}
+
+.card-header {
+  padding: var(--Size-6);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--Size-4);
+  flex-wrap: wrap;
+}
+
+.card-title {
+  font-size: var(--Size-5);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--Size-1);
+  flex: 1;
+}
+
+.card-subtitle {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+
+.card-actions {
+  display: flex;
+  gap: var(--Size-3);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .card-header {
+    padding: var(--Size-4);
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .card-actions {
+    justify-content: stretch;
+  }
+}
+
+/* ===== ENHANCED FORMS ===== */
+form {
+  padding: var(--Size-6);
+}
+
+@media (max-width: 768px) {
+  form {
+    padding: var(--Size-4);
+  }
+}
+
+.form-section {
+  margin-bottom: var(--Size-8);
+  padding: var(--Size-5);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  transition: all var(--transition-normal);
+  position: relative;
+}
+
+.form-section:hover {
+  border-color: var(--accent-color);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+}
+
+.form-section:last-child {
+  margin-bottom: 0;
+}
+
+.section-title {
+  font-size: var(--Size-5);
+  font-weight: 600;
+  color: var(--accent-color);
+  margin-bottom: var(--Size-6);
+  padding-bottom: var(--Size-2);
+  border-bottom: 2px solid var(--accent-color);
+  display: flex;
+  align-items: center;
+  gap: var(--Size-2);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--Size-4);
+  margin-bottom: var(--Size-4);
+}
+
+@media (max-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: var(--Size-4);
+  }
+}
+
+.form-col {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group {
+  margin-bottom: var(--Size-4);
+  position: relative;
+}
+
+.form-label {
+  display: block;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: var(--Size-2);
+  font-size: 0.875rem;
+  transition: color var(--transition-fast);
+}
+
+.form-input {
+  width: 100%;
+  padding: var(--Size-3) var(--Size-4);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  transition: all var(--transition-normal);
+  font-family: inherit;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  transform: translateY(-1px);
+}
+
+.form-input:focus + .form-label {
+  color: var(--accent-color);
+}
+
+.form-input:hover:not(:focus) {
+  border-color: var(--border-strong);
+}
+
+.form-input::placeholder {
+  color: var(--text-muted);
+}
+
+.form-input:disabled {
+  background-color: var(--bg-tertiary);
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
+
+.form-input[readonly] {
+  background-color: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+.form-input.compact {
+  padding: var(--Size-2) var(--Size-3);
+  font-size: 0.8125rem;
+}
+
+.form-input:invalid {
+  border-color: var(--danger-color);
+}
+
+.form-input:valid {
+  border-color: var(--success-color);
+}
+
+.form-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right var(--Size-3) center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: var(--Size-8);
+}
+
+textarea.form-input {
+  resize: vertical;
+  min-height: 120px;
+  line-height: 1.5;
+  font-family: inherit;
+}
+
+/* ===== MEDICATION FIELDS SPECIFIC STYLES ===== */
+.medication-fields {
+  position: relative;
+  padding: var(--Size-5);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--Size-4);
+  background-color: var(--surface-elevated);
+  transition: all var(--transition-normal);
+}
+
+.medication-fields:hover {
+  border-color: var(--accent-color);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+}
+
+.medication-fields:first-child {
+  background-color: transparent;
+  border: none;
+  padding: 0;
+}
+
+.medication-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--Size-4);
+  padding-bottom: var(--Size-2);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.medication-title {
+  font-size: var(--Size-4);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.remove-medication-btn {
+  padding: var(--Size-1) var(--Size-3);
+  font-size: 0.75rem;
+  min-width: auto;
+}
+
+/* Enhanced Add Medication Button */
+#addMedicationBtn {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: var(--Size-2);
+  margin-top: var(--Size-4);
+  margin-bottom: var(--Size-6);
+  width: 100%;
+  background: linear-gradient(135deg, var(--accent-color), var(--info-color));
+  border: none;
+  color: white;
+  font-weight: 600;
+  padding: var(--Size-4) var(--Size-6);
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+#addMedicationBtn::before {
+  content: '💊';
+  font-size: var(--Size-5);
+}
+
+#addMedicationBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+}
+
+#addMedicationBtn:disabled,
+#addMedicationBtn.btn-disabled {
+  background: var(--bg-tertiary);
+  color: var(--text-disabled);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+#addMedicationBtn:disabled::before,
+#addMedicationBtn.btn-disabled::before {
+  content: '⚠️';
+}
+
+/* Ensure button visibility on mobile */
+@media (max-width: 768px) {
+  #addMedicationBtn {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative !important;
+    margin: var(--Size-4) 0 var(--Size-6) 0;
+    padding: var(--Size-4);
+    font-size: 0.875rem;
+  }
+  
+  .medication-fields {
+    padding: var(--Size-4);
+  }
+  
+  .medication-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--Size-3);
+  }
+  
+  .remove-medication-btn {
+    align-self: flex-end;
+  }
+}
+
+/* ===== ENHANCED AUTOCOMPLETE ===== */
+.autocomplete-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-top: none;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: var(--z-dropdown);
+  box-shadow: 0 4px 12px var(--shadow-color);
+  display: none;
+}
+
+.autocomplete-list.active {
+  display: block;
+}
+
+.autocomplete-item {
+  padding: var(--Size-3) var(--Size-4);
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-light);
+  transition: all var(--transition-fast);
+  color: var(--text-primary);
+}
+
+.autocomplete-item:hover {
+  background-color: var(--accent-color);
+  color: white;
+}
+
+.autocomplete-item:last-child {
+  border-bottom: none;
+}
+
+/* ===== ENHANCED BUTTONS ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--Size-2);
+  padding: var(--Size-3) var(--Size-6);
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-size: 0.875rem;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  font-family: inherit;
+  white-space: nowrap;
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left var(--transition-slow);
+}
+
+.btn:hover::before {
+  left: 100%;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+}
+
+.btn-secondary {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 2px solid var(--border-color);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
+  transform: translateY(-1px);
+}
+
+.btn-success {
+  background-color: var(--success-color);
+  color: white;
+  border-color: var(--success-color);
+}
+
+.btn-success:hover:not(:disabled) {
+  background-color: #059669;
+  border-color: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.btn-warning {
+  background-color: var(--warning-color);
+  color: white;
+  border-color: var(--warning-color);
+}
+
+.btn-warning:hover:not(:disabled) {
+  background-color: #d97706;
+  border-color: #d97706;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
+.btn-danger {
+  background-color: var(--danger-color);
+  color: white;
+  border-color: var(--danger-color);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: #dc2626;
+  border-color: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+.btn-info {
+  background-color: var(--info-color);
+  color: white;
+  border-color: var(--info-color);
+}
+
+.btn-info:hover:not(:disabled) {
+  background-color: #0891b2;
+  border-color: #0891b2;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.4);
+}
+
+.btn-sm {
+  padding: var(--Size-2) var(--Size-3);
+  font-size: 0.8125rem;
+}
+
+.btn-full {
+  width: 100%;
+}
+
+/* ===== FORM ACTIONS ===== */
+.form-actions {
+  display: flex;
+  gap: var(--Size-3);
+  padding-top: var(--Size-6);
+  border-top: 1px solid var(--border-light);
+  justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+  .form-actions {
+    flex-direction: column;
+  }
+}
+
+/* ===== ENHANCED THEME TOGGLE ===== */
+.theme-toggle {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  padding: var(--Size-2);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: var(--Size-4);
+  transition: all var(--transition-normal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--Size-9);
+  height: var(--Size-9);
+}
+
+.theme-toggle:hover {
+  background-color: var(--accent-light);
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+  transform: scale(1.05);
+}
+
+.theme-toggle.mobile {
+  width: var(--Size-8);
+  height: var(--Size-8);
+  background: none;
+  border: none;
+}
+
+.theme-toggle.mobile:hover {
+  background: var(--bg-tertiary);
+}
+
+/* ===== PRESCRIPTION & ORDER ITEMS ===== */
+.order-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: var(--Size-6);
+  border-bottom: 1px solid var(--border-light);
+  gap: var(--Size-4);
+  transition: all var(--transition-fast);
+}
+
+.order-item:hover {
+  background-color: var(--bg-tertiary);
+}
+
+.order-item:last-child {
+  border-bottom: none;
+}
+
+@media (max-width: 768px) {
+  .order-item {
+    flex-direction: column;
+    gap: var(--Size-4);
+    padding: var(--Size-4);
+  }
+}
+
+.order-info {
+  flex: 1;
+}
+
+.order-info h4 {
+  font-size: var(--Size-5);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--Size-3);
+}
+
+.order-meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--Size-1);
+}
+
+.meta-row {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.meta-row strong {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.order-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--Size-3);
+  align-items: flex-end;
+  min-width: 200px;
+}
+
+@media (max-width: 768px) {
+  .order-actions {
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    min-width: auto;
+    flex-wrap: wrap;
+  }
+}
+
+/* ===== ENHANCED STATUS & PRIORITY BADGES ===== */
+.status-badge, .priority-indicator {
+  padding: var(--Size-1) var(--Size-3);
+  border-radius: var(--radius-xl);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--Size-1);
+}
+
+.status-pending {
+  background-color: var(--warning-light);
+  color: var(--warning-color);
+  border: 1px solid var(--warning-color);
+}
+
+.status-processing {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: #1d4ed8;
+  border: 1px solid #1d4ed8;
+}
+
+.status-dispensing {
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #92400e;
+}
+
+.status-ready {
+  background-color: var(--success-light);
+  color: var(--success-color);
+  border: 1px solid var(--success-color);
+}
+
+.status-dispensed {
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #065f46;
+}
+
+.status-partially-dispensed {
+  background-color: #fed7aa;
+  color: #ea580c;
+  border: 1px solid #ea580c;
+}
+
+.status-cancelled {
+  background-color: var(--danger-light);
+  color: var(--danger-color);
+  border: 1px solid var(--danger-color);
+}
+
+.priority-routine {
+  background-color: var(--bg-tertiary);
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+}
+
+.priority-urgent {
+  background-color: var(--warning-light);
+  color: var(--warning-color);
+  border: 1px solid var(--warning-color);
+}
+
+.priority-stat {
+  background-color: var(--danger-light);
+  color: var(--danger-color);
+  border: 1px solid var(--danger-color);
+  animation: pulse 2s infinite;
+}
+
+.priority-asap {
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #92400e;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.02); }
+}
+
+/* ===== ENHANCED NOTIFICATIONS ===== */
+.notification-item {
+  padding: var(--Size-5);
+  border-bottom: 1px solid var(--border-light);
+  transition: all var(--transition-fast);
+  position: relative;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notification-item:hover {
+  background-color: var(--bg-tertiary);
+}
+
+.notification-item.unread {
+  background-color: var(--accent-light);
+  border-left: 4px solid var(--accent-color);
+}
+
+.notification-item.urgent {
+  background-color: var(--danger-light);
+  border-left: 4px solid var(--danger-color);
+}
+
+.notification-item.success {
+  background-color: var(--success-light);
+  border-left: 4px solid var(--success-color);
+}
+
+.notification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--Size-2);
+  gap: var(--Size-3);
+}
+
+.notification-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: var(--Size-4);
+  line-height: 1.4;
+  flex: 1;
+}
+
+.notification-time {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  margin-top: var(--Size-1);
+}
+
+.notification-content {
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: var(--Size-3);
+  font-size: 0.875rem;
+}
+
+.notification-actions {
+  display: flex;
+  gap: var(--Size-2);
+  margin-top: var(--Size-3);
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .notification-actions {
+    flex-direction: column;
+  }
+}
+
+/* ===== ENHANCED EMPTY STATES ===== */
+.empty-state {
+  text-align: center;
+  padding: var(--Size-12) var(--Size-6);
+  color: var(--text-muted);
+}
+
+.empty-state-icon {
+  font-size: 4rem;
+  margin-bottom: var(--Size-4);
+  opacity: 0.5;
+  color: var(--text-muted);
+}
+
+.empty-state-title {
+  font-size: var(--Size-6);
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: var(--Size-3);
+}
+
+.empty-state-description {
+  font-size: var(--Size-4);
+  line-height: 1.6;
+  max-width: 400px;
+  margin: 0 auto var(--Size-4);
+}
+
+.empty-state-action {
+  margin-top: var(--Size-4);
+}
+
+/* ===== ENHANCED TOAST NOTIFICATIONS ===== */
+.toast-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--Size-4);
+  box-shadow: 0 8px 24px var(--shadow-strong);
+  z-index: var(--z-tooltip);
+  max-width: 400px;
+  transform: translateX(100%);
+  transition: transform var(--transition-normal);
+  border-left-width: 4px;
+  backdrop-filter: blur(10px);
+}
+
+.toast-notification.show {
+  transform: translateX(0);
+}
+
+.toast-success {
+  border-left-color: var(--success-color);
+  background: linear-gradient(135deg, var(--card-bg) 0%, rgba(16, 185, 129, 0.05) 100%);
+}
+
+.toast-error {
+  border-left-color: var(--danger-color);
+  background: linear-gradient(135deg, var(--card-bg) 0%, rgba(239, 68, 68, 0.05) 100%);
+}
+
+.toast-warning {
+  border-left-color: var(--warning-color);
+  background: linear-gradient(135deg, var(--card-bg) 0%, rgba(245, 158, 11, 0.05) 100%);
+}
+
+.toast-info {
+  border-left-color: var(--accent-color);
+  background: linear-gradient(135deg, var(--card-bg) 0%, rgba(59, 130, 246, 0.05) 100%);
+}
+
+@media (max-width: 768px) {
+  .toast-notification {
+    left: var(--Size-4);
+    right: var(--Size-4);
+    top: var(--Size-4);
+    max-width: none;
+  }
+}
+
+/* ===== FOCUS INDICATORS ===== */
+.btn:focus-visible,
+.nav-link:focus-visible,
+.theme-toggle:focus-visible,
+.notification-btn:focus-visible,
+.mobile-menu-btn:focus-visible,
+.sidebar-close:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+.form-input:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: -2px;
+}
+
+/* ===== ENHANCED SCROLLBAR STYLING ===== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 4px;
+  transition: background var(--transition-fast);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-color);
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--bg-tertiary);
+}
+
+/* ===== LOADING STATES ===== */
+@keyframes loading {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
+  position: relative;
+}
+
+.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 2px solid var(--border-color);
+  border-top-color: var(--accent-color);
+  border-radius: 50%;
+  animation: loading 1s linear infinite;
+}
+
+/* ===== MOBILE RESPONSIVENESS ENHANCEMENTS ===== */
+@media (max-width: 768px) {
+  .mobile-header {
+    display: flex;
+  }
+  
+  .sidebar-header {
+    display: block;
+  }
+  
+  .mobile-overlay {
+    display: block;
+    opacity: 0;
+    pointer-events: none;
+  }
+  
+  .mobile-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .page-title {
+    font-size: 1.25rem;
+  }
+  
+  .section-title {
+    font-size: var(--Size-4);
+  }
+  
+  .card-title {
+    font-size: var(--Size-4);
+  }
+  
+  .btn {
+    padding: var(--Size-3) var(--Size-4);
+    font-size: 0.8125rem;
+  }
+  
+  .order-item h4 {
+    font-size: var(--Size-4);
+  }
+  
+  .meta-row {
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: var(--Size-3);
+  }
+  
+  .card {
+    padding: var(--Size-3);
+    margin-bottom: var(--Size-4);
+  }
+  
+  .card-header {
+    padding: var(--Size-3);
+  }
+  
+  form {
+    padding: var(--Size-3);
+  }
+  
+  .form-section {
+    padding: var(--Size-4);
+  }
+  
+  .page-title {
+    font-size: 1.125rem;
+  }
+  
+  .form-input {
+    padding: var(--Size-3);
+  }
+  
+  .btn {
+    padding: var(--Size-3) var(--Size-4);
+    font-size: var(--Size-3);
+  }
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+  .sidebar,
+  .mobile-header,
+  .header,
+  .mobile-overlay,
+  .btn,
+  .theme-toggle,
+  .notification-btn,
+  .mobile-menu-btn,
+  .card-actions,
+  .form-actions {
+    display: none !important;
+  }
+  
+  .main-content {
+    padding: 0;
+    margin: 0;
+  }
+  
+  .card {
+    box-shadow: none;
+    border: 1px solid #000;
+    break-inside: avoid;
+    margin-bottom: var(--Size-4);
+  }
+  
+  .page-title {
+    font-size: 1.5rem;
+    color: #000 !important;
+    background: none !important;
+    -webkit-text-fill-color: initial !important;
+  }
+  
+  * {
+    color: #000 !important;
+    background: white !important;
+  }
+}
+
+/* ===== HIGH CONTRAST MODE ===== */
+@media (prefers-contrast: high) {
+  :root {
+    --border-color: #000000;
+    --text-muted: #000000;
+    --text-secondary: #000000;
+  }
+  
+  [data-theme="light"] {
+    --border-color: #000000;
+    --text-muted: #000000;
+    --text-secondary: #000000;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #ffffff;
+  }
+  
+  .btn {
+    border: 2px solid currentColor;
+  }
+}
+
+/* ===== REDUCED MOTION ===== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .sidebar {
+    transition: none;
+  }
+  
+  .mobile-overlay {
+    transition: none;
+  }
+  
+  .pulse {
+    animation: none !important;
+  }
+}
+
+/* ===== ADDITIONAL UTILITY CLASSES ===== */
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+
+.mt-0 { margin-top: 0; }
+.mt-1 { margin-top: var(--Size-1); }
+.mt-2 { margin-top: var(--Size-2); }
+.mt-3 { margin-top: var(--Size-3); }
+.mt-4 { margin-top: var(--Size-4); }
+.mt-5 { margin-top: var(--Size-5); }
+.mt-6 { margin-top: var(--Size-6); }
+
+.mb-0 { margin-bottom: 0; }
+.mb-1 { margin-bottom: var(--Size-1); }
+.mb-2 { margin-bottom: var(--Size-2); }
+.mb-3 { margin-bottom: var(--Size-3); }
+.mb-4 { margin-bottom: var(--Size-4); }
+.mb-5 { margin-bottom: var(--Size-5); }
+.mb-6 { margin-bottom: var(--Size-6); }
+
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.flex-row { flex-direction: row; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+.gap-1 { gap: var(--Size-1); }
+.gap-2 { gap: var(--Size-2); }
+.gap-3 { gap: var(--Size-3); }
+.gap-4 { gap: var(--Size-4); }
+
+.w-full { width: 100%; }
+.h-full { height: 100%; }
+
+.text-sm { font-size: 0.875rem; }
+.text-base { font-size: 1rem; }
+.text-lg { font-size: 1.125rem; }
+.text-xl { font-size: 1.25rem; }
+
+.font-medium { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+.font-bold { font-weight: 700; }
+
+.opacity-50 { opacity: 0.5; }
+.opacity-75 { opacity: 0.75; }
+.opacity-100 { opacity: 1; }
+    </style>
+</head>
+<body data-theme="dark">
+    <div class="container">
+        <!-- Dashboard -->
+        <div id="dashboard">
+            <!-- Unified Responsive Header -->
+            <header class="header">
+                <div class="header-content">
+                    <!-- Mobile menu button (visible on mobile) -->
+                    <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                        ☰
+                    </button>
+                    <div class="logo">
+                        <div class="logo-icon">⚕</div>
+                        <div class="logo-text">PharmAssist</div>
+                    </div>
+                    <div class="user-info">
+                        <!-- Notification button (icon only on mobile, text on desktop) -->
+                        <button class="notification-btn" onclick="showPage('notifications')">
+                            <span class="notification-icon" aria-label="Notifications">🔔</span>
+                            <span class="notification-text">Notifications</span>
+                            <span id="notificationBadge" class="notification-badge">3</span>
+                        </button>
+                        <span class="user-greeting">Dr. <span id="physicianName">Smith</span></span>
+                        <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
+                        <button class="btn btn-secondary" onclick="logout()">Sign Out</button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="dashboard-layout">
+                <!-- Sidebar Navigation -->
+                <nav class="sidebar" id="sidebar">
+                    <div class="sidebar-header mobile-only">
+                        <div class="user-profile">
+                            <div class="user-avatar">👨‍⚕️</div>
+                            <div class="user-details">
+                                <div class="user-name">Dr. <span id="sidebarPhysicianName">Smith</span></div>
+                                <div class="user-role">Licensed Physician</div>
+                            </div>
+                        </div>
+                        <button class="sidebar-close" onclick="toggleMobileMenu()">✕</button>
+                    </div>
+                    
+                    <ul class="nav-menu">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link active" onclick="showPage('prescriptionOrder')">
+                                <span class="nav-icon">💊</span> 
+                                <span class="nav-text">New Prescription</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" onclick="showPage('activePrescriptions')">
+                                <span class="nav-icon">📋</span> 
+                                <span class="nav-text">Active Orders</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" onclick="showPage('notifications')">
+                                <span class="nav-icon">🔔</span> 
+                                <span class="nav-text">Notifications</span>
+                                <span id="sidebarNotificationBadge" class="notification-badge">3</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" onclick="showPage('prescriptionHistory')">
+                                <span class="nav-icon">📚</span> 
+                                <span class="nav-text">Prescription History</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" onclick="showPage('physicianProfile')">
+                                <span class="nav-icon">👤</span> 
+                                <span class="nav-text">Physician Profile</span>
+                            </a>
+                        </li>
+                    </ul>
+
+                    <div class="sidebar-footer mobile-only">
+                        <button class="btn btn-secondary btn-full" onclick="logout()">Sign Out</button>
+                    </div>
+                </nav>
+
+                <!-- Mobile Overlay -->
+                <div class="mobile-overlay" id="mobileOverlay" onclick="toggleMobileMenu()"></div>
+
+                <!-- Main Content Area -->
+                <main class="main-content">
+                    <!-- New Prescription Page -->
+                    <div id="prescriptionOrder" class="page">
+                        <div class="page-header">
+                            <h1 class="page-title">New Prescription Order</h1>
+                            <p class="page-subtitle">Submit pharmaceutical requisition to hospital pharmacy</p>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Prescription Details</h3>
+                                <p class="card-subtitle">All fields marked with * are mandatory</p>
+                            </div>
+                            <form id="prescriptionForm">
+                                <!-- Patient Information -->
+                                <div class="form-section">
+                                    <h4 class="section-title">Patient Information</h4>
+                                    <div class="form-row">
+                                        <div class="form-col">
+                                            <label class="form-label" for="patientName">Patient Full Name *</label>
+                                            <input type="text" id="patientName" class="form-input" placeholder="Enter patient's full name" autocomplete="off" required>
+                                            <div id="patientName-autocomplete" class="autocomplete-list"></div>
+                                        </div>
+                                        <div class="form-col">
+                                            <label class="form-label" for="patientMRN">Medical Record Number *</label>
+                                            <input type="text" id="patientMRN" class="form-input" placeholder="MRN-XXXXXXXXX" autocomplete="off" required>
+                                            <div id="patientMRN-autocomplete" class="autocomplete-list"></div>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-col">
+                                            <label class="form-label" for="patientWard">Ward/Department</label>
+                                            <select id="patientWard" class="form-input" required>
+                                                <option value="">Select Ward</option>
+                                                <option value="emergency">Emergency Department</option>
+                                                <option value="icu">Intensive Care Unit</option>
+                                                <option value="cardiology">Cardiology</option>
+                                                <option value="surgery">General Surgery</option>
+                                                <option value="pediatrics">Pediatrics</option>
+                                                <option value="internal">Internal Medicine</option>
+                                                <option value="outpatient">Outpatient Clinic</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-col">
+                                            <label class="form-label" for="bedNumber">Bed Number</label>
+                                            <input type="text" id="bedNumber" class="form-input" placeholder="e.g., ICU-12, Ward-A-25">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Medication Information -->
+                                <div class="form-section" id="medications-section">
+                                    <h4 class="section-title">Medication Information</h4>
+                                    <div id="medication-fields-container">
+                                        <div class="form-section medication-fields">
+                                            <div class="form-row">
+                                                <div class="form-col">
+                                                    <label class="form-label" for="medicationName">Medication Name *</label>
+                                                    <select id="medicationName" name="medicationName" class="form-input" required>
+                                                      <option value="">Select Medication</option>
+                                                      <option value="Medicine 1">Medicine 1</option>
+                                                      <option value="Medicine 2">Medicine 2</option>
+                                                      <option value="Medicine 3">Medicine 3</option>
+                                                      <option value="Medicine 4">Medicine 4</option>
+                                                      <option value="Medicine 5">Medicine 5</option>
+                                                      <option value="Medicine 6">Medicine 6</option>
+                                                      <option value="Medicine 7">Medicine 7</option>
+                                                      <option value="Medicine 8">Medicine 8</option>
+                                                      <option value="Medicine 9">Medicine 9</option>
+                                                    </select>
+                                                </div>
+                                                <div class="form-col">
+                                                    <label class="form-label" for="strength">Strength/Concentration *</label>
+                                                    <select id="strength" name="strength" class="form-input" required>
+                                                        <option value="">Select strength</option>
+                                                        <option value="500mg">500mg</option>
+                                                        <option value="250mg">250mg</option>
+                                                        <option value="100mg">100mg</option>
+                                                        <option value="10mg">10mg</option>
+                                                        <option value="5mg">5mg</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="form-row">
+                                                <div class="form-col">
+                                                    <label class="form-label" for="dosageForm">Dosage Form *</label>
+                                                    <select id="dosageForm" name="dosageForm" class="form-input" required>
+                                                        <option value="">Select form</option>
+                                                        <option value="tablet">Tablet</option>
+                                                        <option value="capsule">Capsule</option>
+                                                    </select>
+                                                </div>
+                                                <div class="form-col">
+                                                    <label class="form-label" for="frequency">Dosing Frequency *</label>
+                                                    <select id="frequency" name="frequency" class="form-input" required>
+                                                        <option value="">Select frequency</option>
+                                                        <option value="once">Once daily (QD)</option>
+                                                        <option value="bid">Twice daily (BID)</option>
+                                                        <option value="tid">Three times daily (TID)</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="button" id="addMedicationBtn" class="btn btn-secondary" style="margin-top: 1rem;">Add Medication</button>
+
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-primary">Submit Prescription Order</button>
+                                    <button type="reset" class="btn btn-secondary">Clear Form</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Active Prescriptions Page -->
+                    <div id="activePrescriptions" class="page hidden">
+                        <div class="page-header">
+                            <h1 class="page-title">Active Prescription Orders</h1>
+                            <p class="page-subtitle">Monitor pending and in-progress pharmaceutical requests</p>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Current Orders Status</h3>
+                            </div>
+                            <div id="activeOrdersList">
+                                <!-- Active orders will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notifications Page -->
+                    <div id="notifications" class="page hidden">
+                        <div class="page-header">
+                            <h1 class="page-title">Pharmacy Notifications</h1>
+                            <p class="page-subtitle">Medication availability alerts and pharmacy updates</p>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Recent Notifications</h3>
+                                <button class="btn btn-sm btn-secondary" onclick="markAllAsRead()">Mark All as Read</button>
+                            </div>
+                            <div id="notificationsList">
+                                <!-- Notifications will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Prescription History Page -->
+                    <div id="prescriptionHistory" class="page hidden">
+                        <div class="page-header">
+                            <h1 class="page-title">Prescription History</h1>
+                            <p class="page-subtitle">Completed pharmaceutical orders and dispensing records</p>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Completed Orders</h3>
+                                <div class="card-actions">
+                                    <input type="date" id="historyDateFilter" class="form-input compact" onchange="filterHistory()">
+                                    <select id="historyStatusFilter" class="form-input compact" onchange="filterHistory()">
+                                        <option value="">All Status</option>
+                                        <option value="dispensed">Dispensed</option>
+                                        <option value="partially-dispensed">Partially Dispensed</option>
+                                        <option value="cancelled">Cancelled</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="historyOrdersList">
+                                <!-- History orders will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Physician Profile Page -->
+                    <div id="physicianProfile" class="page hidden">
+                        <div class="page-header">
+                            <h1 class="page-title">Physician Profile</h1>
+                            <p class="page-subtitle">Medical credentials and system access information</p>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Medical Credentials</h3>
+                            </div>
+                            <form>
+                                <div class="form-row">
+                                    <div class="form-col">
+                                        <label class="form-label">Full Name</label>
+                                        <input type="text" class="form-input" value="Dr. John Michael Smith" readonly>
+                                    </div>
+                                    <div class="form-col">
+                                        <label class="form-label">Medical License Number</label>
+                                        <input type="text" class="form-input" value="MD-123456789" readonly>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-col">
+                                        <label class="form-label">DEA Number</label>
+                                        <input type="text" class="form-input" value="BS1234567" readonly>
+                                    </div>
+                                    <div class="form-col">
+                                        <label class="form-label">NPI Number</label>
+                                        <input type="text" class="form-input" value="1234567890" readonly>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-col">
+                                        <label class="form-label">Primary Specialty</label>
+                                        <input type="text" class="form-input" value="Internal Medicine" readonly>
+                                    </div>
+                                    <div class="form-col">
+                                        <label class="form-label">Hospital Affiliation</label>
+                                        <input type="text" class="form-input" value="Metropolitan General Hospital" readonly>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-col">
+                                        <label class="form-label">Email Address</label>
+                                        <input type="email" class="form-input" value="j.smith@metrogen.hospital.com" readonly>
+                                    </div>
+                                    <div class="form-col">
+                                        <label class="form-label">Department</label>
+                                        <input type="text" class="form-input" value="Internal Medicine Department" readonly>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dashboard Application State Management
+class PharmAssistApp {
+    constructor() {
+        this.currentUser = null;
+        this.prescriptions = [];
+        this.notifications = [];
+        this.patients = [];
+        this.currentPage = 'prescriptionOrder';
+        this.isMobileMenuOpen = false;
+        this.maxMedications = 3; // Increased limit
+        this.medicationCount = 1;
+        this.initializeUser();
+        this.initializeEventListeners();
+        this.fetchAllData();
+    }
+
+    // Logging utility
+    logEvent(context, details) {
+        const timestamp = new Date().toISOString();
+        const logMsg = `[${timestamp}] ${context} : ${JSON.stringify(details)}`;
+        console.log(logMsg);
+        // Send to backend
+        fetch('/api/log', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ context, details })
+        }).catch(() => {});
+    }
+
+    // Initialize user from session storage and validate session
+    async initializeUser() {
+        const userData = sessionStorage.getItem('pharmassist-user');
+        this.logEvent('index', { session: 'initializing' });
+        if (userData) {
+            this.currentUser = JSON.parse(userData);
+            this.logEvent('index', { session: 'verifying', user: this.currentUser.name });
+            // Validate session with backend
+            try {
+                const res = await fetch('/api/validate-session', { credentials: 'include' });
+                const result = await res.json();
+                this.logEvent('index', { session: 'validate-session response', response: result });
+                if (!result.valid) {
+                    this.logEvent('index', { session: 'verifying', result: 'failed' });
+                    sessionStorage.removeItem('pharmassist-user');
+                    window.location.href = 'login.html';
+                    return;
+                } else {
+                    this.logEvent('index', { session: 'verifying', result: 'success', session_token: this.getSessionTokenFromCookie(), user: result.username || this.currentUser.name });
+                }
+            } catch (e) {
+                this.logEvent('index', { session: 'verifying', result: 'failed', error: e.toString() });
+                window.location.href = 'login.html';
+                return;
+            }
+            this.updateUserInterface();
+        } else {
+            this.logEvent('index', { session: 'no user in sessionStorage' });
+            window.location.href = 'login.html';
+        }
+    }
+
+    // Helper to get session token from cookie
+    getSessionTokenFromCookie() {
+        const match = document.cookie.match(/session_token=([^;]+)/);
+        return match ? match[1] : null;
+    }
+
+    // Update user interface with current user data
+    updateUserInterface() {
+        const elements = ['physicianName', 'sidebarPhysicianName'];
+        elements.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = this.currentUser.name;
+            }
+        });
+    }
+
+    async fetchAllData() {
+        await Promise.all([
+            this.fetchPrescriptions(),
+            this.fetchNotifications(),
+            this.fetchPatients()
+        ]);
+        this.updateNotificationBadges();
+        this.loadInitialData();
+    }
+
+    async fetchPrescriptions() {
+        try {
+            const res = await fetch('/api/prescriptions', { credentials: 'include' });
+            const result = await res.json();
+            if (result.success && Array.isArray(result.data)) {
+                this.prescriptions = result.data;
+            } else {
+                this.prescriptions = [];
+            }
+        } catch {
+            this.prescriptions = [];
+        }
+    }
+
+    async fetchNotifications() {
+        try {
+            const res = await fetch('/api/notifications', { credentials: 'include' });
+            const result = await res.json();
+            if (result.success && Array.isArray(result.data)) {
+                this.notifications = result.data;
+            } else {
+                this.notifications = [];
+            }
+        } catch {
+            this.notifications = [];
+        }
+    }
+
+    async fetchPatients() {
+        try {
+            const res = await fetch('/api/patients', { credentials: 'include' });
+            const result = await res.json();
+            if (result.success && Array.isArray(result.data)) {
+                this.patients = result.data;
+            } else {
+                this.patients = [];
+            }
+        } catch {
+            this.patients = [];
+        }
+    }
+
+    // Initialize event listeners
+    initializeEventListeners() {
+        // Prescription form
+        const prescriptionForm = document.getElementById('prescriptionForm');
+        if (prescriptionForm) {
+            prescriptionForm.addEventListener('submit', (e) => this.handlePrescriptionSubmit(e));
+        }
+
+        // Autocomplete for patient name
+        const patientNameInput = document.getElementById('patientName');
+        const patientMRNInput = document.getElementById('patientMRN');
+        if (patientNameInput) {
+            patientNameInput.addEventListener('input', (e) => this.showPatientAutocomplete('name', e.target.value));
+            patientNameInput.addEventListener('focus', (e) => this.showPatientAutocomplete('name', e.target.value));
+            patientNameInput.addEventListener('blur', () => setTimeout(() => this.hideAutocomplete('patientName-autocomplete'), 200));
+        }
+        if (patientMRNInput) {
+            patientMRNInput.addEventListener('input', (e) => this.showPatientAutocomplete('mrn', e.target.value));
+            patientMRNInput.addEventListener('focus', (e) => this.showPatientAutocomplete('mrn', e.target.value));
+            patientMRNInput.addEventListener('blur', () => setTimeout(() => this.hideAutocomplete('patientMRN-autocomplete'), 200));
+        }
+
+        // Initialize medication management
+        this.initializeMedicationManagement();
+
+        // Initialize theme
+        const savedTheme = localStorage.getItem('pharmassist-theme') || 'dark';
+        document.body.setAttribute('data-theme', savedTheme);
+    }
+
+    // Initialize medication management system
+    initializeMedicationManagement() {
+        const addBtn = document.getElementById('addMedicationBtn');
+        if (addBtn) {
+            addBtn.addEventListener('click', () => this.addMedicationField());
+            this.updateAddButtonVisibility();
+        }
+    }
+
+    // Add new medication field
+    addMedicationField() {
+        if (this.medicationCount >= this.maxMedications) return;
+
+        this.medicationCount++;
+        const container = document.getElementById('medication-fields-container');
+        if (!container) return;
+
+        const medDiv = document.createElement('div');
+        medDiv.className = 'form-section medication-fields';
+        medDiv.setAttribute('data-medication-index', this.medicationCount - 1);
+        
+        medDiv.innerHTML = `
+            <div class="medication-header">
+                <h5 class="medication-title">Medication ${this.medicationCount}</h5>
+                <button type="button" class="btn btn-sm btn-danger remove-medication-btn">
+                    Remove
+                </button>
+            </div>
+            <div class="form-row">
+                <div class="form-col">
+                    <label class="form-label">Medication Name *</label>
+                    <select name="medicationName" class="form-input" required>
+                        <option value="">Select Medication</option>
+                        <option value="Medicine 1">Medicine 1</option>
+                        <option value="Medicine 2">Medicine 2</option>
+                        <option value="Medicine 3">Medicine 3</option>
+                        <option value="Medicine 4">Medicine 4</option>
+                        <option value="Medicine 5">Medicine 5</option>
+                        <option value="Medicine 6">Medicine 6</option>
+                        <option value="Medicine 7">Medicine 7</option>
+                        <option value="Medicine 8">Medicine 8</option>
+                        <option value="Medicine 9">Medicine 9</option>
+                    </select>
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Strength/Concentration *</label>
+                    <select name="strength" class="form-input" required>
+                        <option value="">Select strength</option>
+                        <option value="500mg">500mg</option>
+                        <option value="250mg">250mg</option>
+                        <option value="100mg">100mg</option>
+                        <option value="10mg">10mg</option>
+                        <option value="5mg">5mg</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-col">
+                    <label class="form-label">Dosage Form *</label>
+                    <select name="dosageForm" class="form-input" required>
+                        <option value="">Select form</option>
+                        <option value="capsule">Capsule</option>   
+                        <option value="tablet">Tablet</option>
+                    </select>
+                </div>
+                <div class="form-col">
+                    <label class="form-label">Dosing Frequency *</label>
+                    <select name="frequency" class="form-input" required>
+                        <option value="">Select frequency</option>
+                        <option value="once">Once a day (QD)</option>
+                        <option value="bid">Twice a day (BID)</option>
+                        <option value="tid">Three times a day (TID)</option>
+                    </select>
+                </div>
+            </div>
+        `;
+
+        container.appendChild(medDiv);
+
+        // Add event listener to remove button
+        const removeBtn = medDiv.querySelector('.remove-medication-btn');
+        removeBtn.addEventListener('click', () => this.removeMedicationField(medDiv));
+
+        this.updateAddButtonVisibility();
+        this.updateMedicationNumbers();
+    }
+
+    // Remove medication field
+    removeMedicationField(medDiv) {
+        medDiv.remove();
+        this.medicationCount--;
+        this.updateAddButtonVisibility();
+        this.updateMedicationNumbers();
+    }
+
+    // Update medication field numbers
+    updateMedicationNumbers() {
+        const medicationFields = document.querySelectorAll('.medication-fields');
+        medicationFields.forEach((field, index) => {
+            const title = field.querySelector('.medication-title');
+            if (title) {
+                title.textContent = `Medication ${index + 1}`;
+            }
+            field.setAttribute('data-medication-index', index);
+        });
+    }
+
+    // Update add button visibility and state
+    updateAddButtonVisibility() {
+        const addBtn = document.getElementById('addMedicationBtn');
+        if (addBtn) {
+            addBtn.disabled = this.medicationCount >= this.maxMedications;
+            addBtn.style.display = 'flex'; // Ensure it's always visible
+            
+            if (this.medicationCount >= this.maxMedications) {
+                addBtn.textContent = `Maximum ${this.maxMedications} medications allowed`;
+                addBtn.classList.add('btn-disabled');
+            } else {
+                addBtn.textContent = `Add Medication (${this.medicationCount}/${this.maxMedications})`;
+                addBtn.classList.remove('btn-disabled');
+            }
+        }
+    }
+
+    // Logout method
+    logout() {
+        // Clear session data
+        sessionStorage.removeItem('pharmassist-user');
+        
+        // Close mobile menu if open
+        if (this.isMobileMenuOpen) {
+            this.toggleMobileMenu();
+        }
+        
+        // Redirect to login page
+        window.location.href = 'login.html';
+    }
+
+    // Navigation methods
+    showPage(pageId) {
+        this.logEvent('index', { session: this.currentUser ? this.currentUser.name : null, action: `open ${pageId}` });
+        // Hide all pages
+        document.querySelectorAll('.page').forEach(page => {
+            page.classList.add('hidden');
+        });
+        
+        // Remove active class from all nav links
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.remove('active');
+        });
+        
+        // Show selected page
+        const targetPage = document.getElementById(pageId);
+        if (targetPage) {
+            targetPage.classList.remove('hidden');
+        }
+        
+        // Add active class to clicked nav link
+        const activeLink = document.querySelector(`[onclick="showPage('${pageId}')"]`);
+        if (activeLink) {
+            activeLink.classList.add('active');
+        }
+
+        // Load page-specific data
+        this.loadPageData(pageId);
+        this.currentPage = pageId;
+
+        // Close mobile menu after navigation
+        if (this.isMobileMenuOpen) {
+            this.toggleMobileMenu();
+        }
+    }
+
+    loadPageData(pageId) {
+        switch(pageId) {
+            case 'activePrescriptions':
+                this.loadActivePrescriptions();
+                break;
+            case 'prescriptionHistory':
+                this.loadPrescriptionHistory();
+                break;
+            case 'notifications':
+                this.loadNotifications();
+                break;
+        }
+    }
+
+    loadInitialData() {
+        this.loadActivePrescriptions();
+        this.loadNotifications();
+        this.loadPrescriptionHistory();
+    }
+
+    // Mobile menu methods
+    toggleMobileMenu() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('mobileOverlay');
+        
+        this.isMobileMenuOpen = !this.isMobileMenuOpen;
+        
+        if (this.isMobileMenuOpen) {
+            sidebar.classList.add('mobile-open');
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        } else {
+            sidebar.classList.remove('mobile-open');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    }
+
+    // Prescription management methods
+    async handlePrescriptionSubmit(e) {
+        this.logEvent('index', { session: this.currentUser ? this.currentUser.name : null, action: 'submit prescription' });
+        e.preventDefault();
+        const form = e.target;
+        
+        // Collect all medication fields
+        const medicationBlocks = form.querySelectorAll('.medication-fields');
+        const medications = Array.from(medicationBlocks).map((block, idx) => {
+            const medicationName = block.querySelector('[name="medicationName"]')?.value;
+            const strength = block.querySelector('[name="strength"]')?.value;
+            const dosageForm = block.querySelector('[name="dosageForm"]')?.value;
+            const frequency = block.querySelector('[name="frequency"]')?.value;
+
+            return {
+                medicationName: medicationName || '',
+                strength: strength || '',
+                dosageForm: dosageForm || '',
+                frequency: frequency || ''
+            };
+        });
+
+        // Filter out empty medications
+        const validMedications = medications.filter(med => 
+            med.medicationName && med.strength && med.dosageForm && med.frequency
+        );
+
+        if (validMedications.length === 0) {
+            this.showNotification('Please add at least one complete medication.', 'error');
+            return;
+        }
+
+        const prescriptionData = {
+            id: this.generatePrescriptionId(),
+            patientName: document.getElementById('patientName').value,
+            patientMRN: document.getElementById('patientMRN').value,
+            ward: document.getElementById('patientWard').value,
+            bedNumber: document.getElementById('bedNumber').value,
+            medications: validMedications,
+            status: 'pending',
+            date: new Date().toISOString().split('T')[0],
+            prescribingPhysician: `Dr. ${this.currentUser ? this.currentUser.name : 'Smith'}`
+        };
+
+        // Send to backend
+        try {
+            const res = await fetch('/api/prescription', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(prescriptionData)
+            });
+            const text = await res.text();
+            let result = {};
+            try {
+                result = JSON.parse(text);
+            } catch (err) {
+                this.logEvent('index-submit', { stage: 'json-parse-error', error: err.message, raw: text });
+            }
+
+            this.logEvent('index-submit', {
+                stage: 'response',
+                ok: res.ok,
+                status: res.status,
+                statusText: res.statusText,
+                raw: text,
+                parsed: result
+            });
+
+            if (result.success) {
+                this.showNotification('Prescription submitted successfully! ', 'success');
+                form.reset();
+                await this.fetchPrescriptions();
+                this.loadActivePrescriptions();
+                return; // Prevent further execution
+            } else {
+                this.showNotification(result.message || 'Submission failed.', 'error');
+                return;
+            }
+        } catch {
+            this.logEvent('index-submit', { stage: 'fetch-error', error: err.message });
+            this.showNotification('Submission failed. Check connection.', 'error');
+            return;
+        }
+        
+    }
+
+    // Reset prescription form
+    resetPrescriptionForm() {
+        const form = document.getElementById('prescriptionForm');
+        if (form) {
+            form.reset();
+            
+            // Remove additional medication fields
+            const additionalMeds = document.querySelectorAll('.medication-fields[data-medication-index]:not([data-medication-index="0"])');
+            additionalMeds.forEach(field => field.remove());
+            
+            this.medicationCount = 1;
+            this.updateAddButtonVisibility();
+        }
+    }
+
+    generatePrescriptionId() {
+        const year = new Date().getFullYear();
+        const orderNumber = String(this.prescriptions.length + 1).padStart(3, '0');
+        return `RX-${year}-${orderNumber}`;
+    }
+
+    // Data loading methods
+    loadActivePrescriptions() {
+        const activePrescriptions = this.prescriptions.filter(rx => 
+            ['pending', 'processing', 'dispensing', 'ready'].includes(rx.status)
+        );
+
+        const container = document.getElementById('activeOrdersList');
+        if (!container) return;
+
+        if (activePrescriptions.length === 0) {
+            container.innerHTML = this.createEmptyState('📋', 'No Active Prescriptions', 'All prescription orders have been completed or there are no pending orders.');
+            return;
+        }
+
+        container.innerHTML = activePrescriptions.map(rx => this.createPrescriptionCard(rx, true)).join('');
+    }
+
+    loadPrescriptionHistory() {
+        const completedPrescriptions = this.prescriptions.filter(rx => 
+            ['dispensed', 'partially-dispensed', 'cancelled'].includes(rx.status)
+        );
+
+        const container = document.getElementById('historyOrdersList');
+        if (!container) return;
+
+        if (completedPrescriptions.length === 0) {
+            container.innerHTML = this.createEmptyState('📚', 'No Prescription History', 'Completed prescriptions will appear here once they are dispensed.');
+            return;
+        }
+
+        container.innerHTML = completedPrescriptions.map(rx => this.createPrescriptionCard(rx, false)).join('');
+    }
+
+    loadNotifications() {
+        this.logEvent('index', { session: this.currentUser ? this.currentUser.name : null, action: 'open notif' });
+        const container = document.getElementById('notificationsList');
+        if (!container) return;
+
+        if (this.notifications.length === 0) {
+            container.innerHTML = this.createEmptyState('🔔', 'No Notifications', 'Pharmacy updates and medication alerts will appear here.');
+            return;
+        }
+
+        container.innerHTML = this.notifications.map(notification => this.createNotificationCard(notification)).join('');
+    }
+
+    // UI Creation methods
+    createPrescriptionCard(prescription, isActive = true) {
+        const priorityClass = `priority-${prescription.priority}`;
+        const statusClass = `status-${prescription.status}`;
+        
+        const actionButtons = isActive ? this.createActiveOrderActions(prescription) : '';
+        const completionInfo = !isActive ? this.createCompletionInfo(prescription) : '';
+
+        // Handle multiple medications
+        const medicationsDisplay = prescription.medications ? 
+            prescription.medications.map(med => 
+                `${med.medicationName} ${med.strength} (${med.dosageForm})`
+            ).join(', ') : 
+            `${prescription.medicationName} ${prescription.strength} (${prescription.dosageForm})`;
+
+        return `
+            <div class="order-item" data-order-id="${prescription.id}">
+                <div class="order-info">
+                    <h4>${medicationsDisplay}</h4>
+                    <div class="order-meta">
+                        <div class="meta-row"><strong>Patient:</strong> ${prescription.patientName} (${prescription.patientMRN})</div>
+                        <div class="meta-row"><strong>Ward:</strong> ${this.formatWardName(prescription.ward)} ${prescription.bedNumber ? `| Bed: ${prescription.bedNumber}` : ''}</div>
+                        <div class="meta-row"><strong>Order Date:</strong> ${this.formatDate(prescription.date)} | <strong>ID:</strong> ${prescription.id}</div>
+                        <div class="meta-row"><strong>Physician:</strong> ${prescription.prescribingPhysician}</div>
+                        ${completionInfo}
+                    </div>
+                </div>
+                <div class="order-actions">
+                    <span class="status-badge ${statusClass}">${this.formatStatus(prescription.status)}</span>
+                    <span class="priority-indicator ${priorityClass}">${prescription.priority.toUpperCase()}</span>
+                    ${actionButtons}
+                </div>
+            </div>
+        `;
+    }
+
+    createActiveOrderActions(prescription) {
+        let actions = '';
+        
+        if (prescription.status === 'ready') {
+            actions += `<button class="btn btn-sm btn-success" onclick="app.collectMedication('${prescription.id}')">Collect</button>`;
+        }
+        
+        if (['pending', 'processing'].includes(prescription.status)) {
+            actions += `<button class="btn btn-sm btn-warning" onclick="app.modifyPrescription('${prescription.id}')">Modify</button>`;
+            actions += `<button class="btn btn-sm btn-danger" onclick="app.cancelPrescription('${prescription.id}')">Cancel</button>`;
+        }
+
+        return actions;
+    }
+
+    createCompletionInfo(prescription) {
+        let info = '';
+        
+        if (prescription.status === 'dispensed') {
+            info = `<div class="meta-row"><strong>Dispensed:</strong> ${this.formatDate(prescription.completedDate)} by ${prescription.dispensedBy}</div>`;
+        } else if (prescription.status === 'partially-dispensed') {
+            info = `<div class="meta-row"><strong>Partially Dispensed:</strong> ${prescription.partialQuantity}/${prescription.quantity} units</div>`;
+            info += `<div class="meta-row"><strong>Reason:</strong> ${prescription.partialReason}</div>`;
+        }
+
+        return info;
+    }
+
+    createNotificationCard(notification) {
+        const notificationClass = notification.read ? '' : 'unread';
+        const typeClass = notification.type === 'urgent' ? 'urgent' : notification.type === 'success' ? 'success' : '';
+        
+        return `
+            <div class="notification-item ${notificationClass} ${typeClass}">
+                <div class="notification-header">
+                    <div class="notification-title">${notification.title}</div>
+                    <div class="notification-time">${notification.time}</div>
+                </div>
+                <div class="notification-content">
+                    ${notification.content}
+                </div>
+                ${notification.actionRequired ? this.createNotificationActions(notification) : ''}
+            </div>
+        `;
+    }
+
+    createNotificationActions(notification) {
+        let actions = '<div class="notification-actions">';
+        
+        if (notification.relatedOrderId) {
+            actions += `<button class="btn btn-sm btn-info" onclick="app.viewRelatedOrder('${notification.relatedOrderId}')">View Order</button>`;
+        }
+        
+        if (!notification.read) {
+            actions += `<button class="btn btn-sm btn-secondary" onclick="app.markAsRead('${notification.id}')">Mark as Read</button>`;
+        }
+        
+        actions += '</div>';
+        return actions;
+    }
+
+    createEmptyState(icon, title, description) {
+        return `
+            <div class="empty-state">
+                <div class="empty-state-icon">${icon}</div>
+                <h3 class="empty-state-title">${title}</h3>
+                <p class="empty-state-description">${description}</p>
+            </div>
+        `;
+    }
+
+    // Autocomplete logic
+    showPatientAutocomplete(type, value) {
+        value = value.trim().toLowerCase();
+        let matches = [];
+        if (!value) {
+            this.hideAutocomplete(type === 'name' ? 'patientName-autocomplete' : 'patientMRN-autocomplete');
+            return;
+        }
+        if (type === 'name') {
+            matches = this.patients.filter(p => p.name.toLowerCase().includes(value));
+        } else {
+            matches = this.patients.filter(p => p.mrn.toLowerCase().includes(value));
+        }
+        const listId = type === 'name' ? 'patientName-autocomplete' : 'patientMRN-autocomplete';
+        const list = document.getElementById(listId);
+        if (!list) return;
+        if (matches.length === 0) {
+            list.innerHTML = '';
+            list.classList.remove('active');
+            return;
+        }
+        list.innerHTML = matches.map(p => `
+            <div class="autocomplete-item" data-patient='${JSON.stringify(p)}'>
+                ${type === 'name' ? p.name : p.mrn} <span style="color:var(--text-muted);font-size:0.9em;">(${type === 'name' ? p.mrn : p.name})</span>
+            </div>
+        `).join('');
+        list.classList.add('active');
+        // Add click listeners
+        Array.from(list.querySelectorAll('.autocomplete-item')).forEach(item => {
+            item.onclick = (e) => {
+                const patient = JSON.parse(item.getAttribute('data-patient'));
+                this.fillPatientFields(patient);
+                this.hideAutocomplete(listId);
+            };
+        });
+    }
+
+    hideAutocomplete(listId) {
+        const list = document.getElementById(listId);
+        if (list) {
+            list.classList.remove('active');
+            list.innerHTML = '';
+        }
+    }
+
+    fillPatientFields(patient) {
+        document.getElementById('patientName').value = patient.name;
+        document.getElementById('patientMRN').value = patient.mrn;
+        document.getElementById('patientWard').value = patient.ward;
+        document.getElementById('bedNumber').value = patient.bed;
+    }
+
+    // Utility methods
+    formatWardName(ward) {
+        const wardNames = {
+            'emergency': 'Emergency Department',
+            'icu': 'Intensive Care Unit',
+            'cardiology': 'Cardiology',
+            'surgery': 'General Surgery',
+            'pediatrics': 'Pediatrics',
+            'internal': 'Internal Medicine',
+            'outpatient': 'Outpatient Clinic'
+        };
+        return wardNames[ward] || ward;
+    }
+
+    formatStatus(status) {
+        const statusNames = {
+            'pending': 'Pending Review',
+            'processing': 'Processing',
+            'dispensing': 'Being Dispensed',
+            'ready': 'Ready for Collection',
+            'dispensed': 'Dispensed',
+            'partially-dispensed': 'Partially Dispensed',
+            'cancelled': 'Cancelled'
+        };
+        return statusNames[status] || status;
+    }
+
+    formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric' 
+        });
+    }
+
+    // Action methods
+    async collectMedication(prescriptionId) {
+        try {
+            await fetch(`/api/prescriptions/${prescriptionId}/collect`, { method: 'POST', credentials: 'include' });
+            await this.fetchPrescriptions();
+            this.showNotification('Medication collected successfully!', 'success');
+            this.refreshCurrentPage();
+        } catch {
+            this.showNotification('Failed to collect medication.', 'error');
+        }
+    }
+
+    modifyPrescription(prescriptionId) {
+        this.showNotification('Prescription modification feature coming soon!', 'info');
+    }
+
+    async cancelPrescription(prescriptionId) {
+        if (confirm('Are you sure you want to cancel this prescription order?')) {
+            try {
+                await fetch(`/api/prescriptions/${prescriptionId}/cancel`, { method: 'POST', credentials: 'include' });
+                await this.fetchPrescriptions();
+                this.showNotification('Prescription cancelled.', 'warning');
+                this.refreshCurrentPage();
+            } catch {
+                this.showNotification('Failed to cancel prescription.', 'error');
+            }
+        }
+    }
+
+    viewRelatedOrder(orderId) {
+        const prescription = this.prescriptions.find(rx => rx.id === orderId);
+        if (prescription) {
+            if (['pending', 'processing', 'dispensing', 'ready'].includes(prescription.status)) {
+                this.showPage('activePrescriptions');
+            } else {
+                this.showPage('prescriptionHistory');
+            }
+            
+            // Highlight the related order
+            setTimeout(() => {
+                const orderElement = document.querySelector(`[data-order-id="${orderId}"]`);
+                if (orderElement) {
+                    orderElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    orderElement.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+                    setTimeout(() => {
+                        orderElement.style.backgroundColor = '';
+                    }, 3000);
+                }
+            }, 300);
+        }
+    }
+
+    async markAsRead(notificationId) {
+        try {
+            await fetch(`/api/notifications/${notificationId}/read`, { method: 'POST', credentials: 'include' });
+            await this.fetchNotifications();
+            this.updateNotificationBadges();
+            this.loadNotifications();
+        } catch {}
+    }
+
+    async markAllAsRead() {
+        try {
+            await fetch('/api/notifications/mark-all-read', { method: 'POST', credentials: 'include' });
+            await this.fetchNotifications();
+            this.updateNotificationBadges();
+            this.loadNotifications();
+            this.showNotification('All notifications marked as read.', 'success');
+        } catch {}
+    }
+
+    // Notification management
+    addNotification(notificationData) {
+        const notification = {
+            id: 'NOTIF-' + Math.random().toString(36).substr(2, 9),
+            time: 'Just now',
+            read: false,
+            actionRequired: false,
+            ...notificationData
+        };
+        
+        this.notifications.unshift(notification);
+        this.updateNotificationBadges();
+        
+        // If on notifications page, refresh
+        if (this.currentPage === 'notifications') {
+            this.loadNotifications();
+        }
+    }
+
+    updateNotificationBadges() {
+        const unreadCount = this.notifications.filter(n => !n.read).length;
+        const badgeElements = [
+            'notificationBadge',
+            'notificationBadgeDesktop', 
+            'sidebarNotificationBadge'
+        ];
+        
+        badgeElements.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = unreadCount;
+                element.style.display = unreadCount > 0 ? 'flex' : 'none';
+            }
+        });
+    }
+
+    // Filtering methods
+    filterHistory() {
+        const dateFilter = document.getElementById('historyDateFilter').value;
+        const statusFilter = document.getElementById('historyStatusFilter').value;
+        
+        let filtered = this.prescriptions.filter(rx => 
+            ['dispensed', 'partially-dispensed', 'cancelled'].includes(rx.status)
+        );
+        
+        if (dateFilter) {
+            filtered = filtered.filter(rx => rx.date === dateFilter);
+        }
+        
+        if (statusFilter) {
+            filtered = filtered.filter(rx => rx.status === statusFilter);
+        }
+        
+        const container = document.getElementById('historyOrdersList');
+        if (container) {
+            if (filtered.length === 0) {
+                container.innerHTML = this.createEmptyState('🔍', 'No Results Found', 'No prescriptions match your current filters.');
+            } else {
+                container.innerHTML = filtered.map(rx => this.createPrescriptionCard(rx, false)).join('');
+            }
+        }
+    }
+
+    // Utility methods
+    refreshCurrentPage() {
+        this.loadPageData(this.currentPage);
+    }
+
+    showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `toast-notification toast-${type}`;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--Size-2);
+            padding: var(--Size-4);
+            box-shadow: 0 4px 12px var(--shadow-color);
+            z-index: 10000;
+            max-width: 400px;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        `;
+        
+        const typeColors = {
+            success: 'var(--success-color)',
+            error: 'var(--danger-color)',
+            warning: 'var(--warning-color)',
+            info: 'var(--accent-color)'
+        };
+        
+        notification.style.borderLeftColor = typeColors[type];
+        notification.style.borderLeftWidth = '4px';
+        
+        notification.innerHTML = `
+            <div style="display: flex; align-items: center; gap: var(--Size-3);">
+                <span style="color: ${typeColors[type]}; font-size: var(--Size-5);">
+                    ${type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️'}
+                </span>
+                <span style="color: var(--text-primary); flex: 1;">${message}</span>
+                <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: var(--Size-4);">✕</button>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Animate in
+        setTimeout(() => {
+            notification.style.transform = 'translateX(0)';
+        }, 100);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 300);
+        }, 5000);
+    }
+
+    // Theme management
+    toggleTheme() {
+        const body = document.body;
+        const currentTheme = body.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        body.setAttribute('data-theme', newTheme);
+        localStorage.setItem('pharmassist-theme', newTheme);
+    }
+}
+
+// Global functions for HTML onclick handlers
+function showPage(pageId) {
+    app.showPage(pageId);
+}
+
+function toggleMobileMenu() {
+    app.toggleMobileMenu();
+}
+
+function toggleTheme() {
+    app.toggleTheme();
+}
+
+function logout() {
+    app.logout();
+}
+
+function markAllAsRead() {
+    app.markAllAsRead();
+}
+
+function filterHistory() {
+    app.filterHistory();
+}
+
+// Initialize the application
+let app;
+
+document.addEventListener('DOMContentLoaded', function() {
+    app = new PharmAssistApp();
+    
+    // Set initial theme
+    const savedTheme = localStorage.getItem('pharmassist-theme') || 'dark';
+    document.body.setAttribute('data-theme', savedTheme);
+    
+    // Load initial data
+    app.loadInitialData();
+    
+    // Handle window resize for mobile menu
+    window.addEventListener('resize', function() {
+        if (window.innerWidth > 768 && app.isMobileMenuOpen) {
+            app.toggleMobileMenu();
+        }
+    });
+    
+    // Handle back button on mobile
+    window.addEventListener('popstate', function() {
+        if (app.isMobileMenuOpen) {
+            app.toggleMobileMenu();
+        }
+    });
+});
+
+// Export for potential module usage
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = PharmAssistApp;
+}
+    </script>
+</body>
+</html>

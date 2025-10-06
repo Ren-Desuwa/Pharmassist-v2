@@ -589,9 +589,14 @@
                 </div>
             </div>
         </div>
+        
+        <div id="debugModeIndicator" style="display:none;position:fixed;top:0;left:0;width:100%;background:#f59e0b;color:#222;text-align:center;padding:6px 0;z-index:2000;font-weight:bold;">
+            DEBUG MODE ENABLED - API calls are simulated
+        </div>
     </div>
-
     <script>
+        window.debugMode = false; // Global debug mode flag
+
         // Logging utility
         function logEvent(context, details) {
             const timestamp = new Date().toISOString();
@@ -610,6 +615,7 @@
                 this.currentMode = 'login';
                 this.initializeEventListeners();
                 this.initializeTheme();
+                this.VerifyApi();
             }
 
             initializeEventListeners() {
@@ -632,7 +638,7 @@
                         input.parentElement.querySelector('.form-label').style.color = 'var(--accent-color)';
                     });
                     input.addEventListener('blur', () => {
-                        input.parentElement.querySelector('.form-label').style.color = 'var(--text-primary)';
+                        input.parentElement.querySelector('.form-label').style.color = 'var(--text-primary';
                     });
                 });
             }
@@ -642,6 +648,29 @@
                 const savedTheme = localStorage?.getItem('Pharmaassist-theme') || 'dark';
                 document.body.setAttribute('data-theme', savedTheme);
                 this.updateThemeToggle(savedTheme);
+            }
+
+            VerifyApi() {
+                fetch('/api/status', { method: 'GET' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status !== 'ok') {
+                            this.enterDebugMode('Backend API is unreachable. Entering debug mode.');
+                            logEvent('api', { action: 'status_check', result: 'failed', details: data });
+                        } else {
+                            logEvent('api', { action: 'status_check', result: 'success' });
+                        }
+                    })
+                    .catch(error => {
+                        this.enterDebugMode('Backend API is unreachable. Entering debug mode.');
+                        logEvent('api', { action: 'status_check', result: 'error', error: error.toString() });
+                    });
+            }
+
+            enterDebugMode(msg) {
+                window.debugMode = true;
+                document.getElementById('debugModeIndicator').style.display = 'block';
+                this.showNotification(msg, 'warning');
             }
 
             switchMode(mode) {
@@ -682,7 +711,7 @@
                 const submitButton = e.target.querySelector('button[type="submit"]');
                 const email = emailInput.value.trim();
                 const password = passwordInput.value;
-                
+
                 logEvent('login', { user: email, action: 'attempt' });
 
                 if (!email || !password) {
@@ -691,9 +720,23 @@
                     return;
                 }
 
+                // --- Static test login ---
+                if (email === 'admin01' && password === '123123123') {
+                    logEvent('login', { user: email, result: 'success', session_token: 'admin-session', userInfo: { name: 'Admin User', role: 'admin' } });
+                    sessionStorage.setItem('pharmassist-user', JSON.stringify({ name: 'Admin User', role: 'admin' }));
+                    this.showNotification('Welcome, Admin User!', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/index.html';
+                    }, 1000);
+                    submitButton.innerHTML = '<span>Authenticate</span>';
+                    submitButton.classList.remove('loading');
+                    submitButton.disabled = false;
+                    return;
+                }
+                // --- End static test login ---
+
                 // Regex for email only
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
                 // Regex for username only (letters, numbers, space, underscore, dash)
                 const usernameRegex = /^[A-Za-z0-9 _-]+$/;
 
